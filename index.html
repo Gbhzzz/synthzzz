@@ -1,0 +1,1136 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"><title>SYNTH.READ · LIVE</title><style> @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap'); :root { --bg: #080b0f; --bg2: #0d1117; --bg3: #111820; --border: #1e2d3d; --border2: #243447; --green: #00e676; --green2: #00c853; --red: #ff1744; --red2: #d50000; --amber: #ffab00; --amber2: #ff8f00; --cyan: #00e5ff; --blue: #2979ff; --purple: #7c4dff; --text: #e0e8f0; --text2: #8fa8c0; --text3: #4a6278; --gold: #ffd740; --dual: #00e5ff; } * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; } body { background: var(--bg); color: var(--text); font-family: 'Rajdhani', sans-serif; min-height: 100vh; overflow-x: hidden; } .app { max-width: 430px; margin: 0 auto; min-height: 100vh; padding-bottom: 40px; } .header { padding: 18px 16px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); } .logo { font-family: 'Orbitron', monospace; font-size: 20px; font-weight: 900; letter-spacing: 2px; color: var(--text); } .logo span { color: var(--cyan); } .logo-sub { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 3px; margin-top: 2px; } .ws-status { display: flex; align-items: center; gap: 6px; font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 1px; } .ws-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); transition: background 0.3s; } .ws-dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; } .ws-dot.connecting { background: var(--amber); animation: pulse 0.6s infinite; } @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} } .ws-label { color: var(--text3); } .ws-label.connected { color: var(--green); } .ws-label.connecting { color: var(--amber); } .mode-tabs { display: flex; gap: 6px; padding: 12px 16px; border-bottom: 1px solid var(--border); } .mode-tab { flex: 1; padding: 8px 4px; border-radius: 6px; border: 1px solid var(--border2); background: var(--bg2); cursor: pointer; text-align: center; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 10px; letter-spacing: 1px; color: var(--text3); transition: all 0.2s; } .mode-tab.active-scalp, .mode-tab.active-balanced { background: rgba(255, 171, 0, 0.1); border-color: var(--amber); color: var(--amber); } .mode-tab.active-dual { background: rgba(0, 229, 255, 0.08); border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 12px rgba(0,229,255,0.15); } .mode-tab .tab-num { font-size: 13px; display: block; } .mode-tab .tab-label { font-size: 9px; opacity: 0.8; } .section { display: none; } .section.active { display: block; } .info-box { margin: 12px 16px; padding: 12px 14px; border-radius: 8px; border: 1px solid; font-family: 'Share Tech Mono', monospace; font-size: 11px; line-height: 1.6; } .info-box.amber { border-color: rgba(255,171,0,0.4); background: rgba(255,171,0,0.06); color: var(--amber); } .info-box.cyan { border-color: rgba(0,229,255,0.4); background: rgba(0,229,255,0.06); color: var(--cyan); } .info-box.red { border-color: rgba(255,23,68,0.4); background: rgba(255,23,68,0.06); color: var(--red); } .instruments { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding: 0 16px; margin-bottom: 8px; } .inst-btn { padding: 10px 6px; border-radius: 6px; border: 1px solid var(--border2); background: var(--bg2); cursor: pointer; text-align: center; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 11px; color: var(--text2); transition: all 0.18s; letter-spacing: 0.5px; } .inst-btn.active { background: rgba(41,121,255,0.12); border-color: var(--blue); color: var(--text); } .tf-row { display: flex; gap: 6px; padding: 0 16px; margin-bottom: 12px; } .tf-btn { padding: 7px 14px; border-radius: 6px; border: 1px solid var(--border2); background: var(--bg2); cursor: pointer; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 12px; color: var(--text3); transition: all 0.18s; } .tf-btn.active { background: rgba(41,121,255,0.15); border-color: var(--blue); color: var(--text); } .fetch-btn { margin: 0 16px 12px; width: calc(100% - 32px); padding: 16px; border-radius: 8px; border: 1px solid var(--amber); background: rgba(255,171,0,0.08); cursor: pointer; font-family: 'Orbitron', monospace; font-weight: 700; font-size: 14px; letter-spacing: 2px; color: var(--amber); display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s; } .fetch-btn:active { transform: scale(0.98); background: rgba(255,171,0,0.15); } .stale-bar { margin: 0 16px 12px; display: flex; justify-content: space-between; align-items: center; gap: 12px; } .stale-bar > div:first-child { flex: 1; } .stale-label { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 1px; } .stale-status { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--red); letter-spacing: 1px; } .stale-progress { width: 100%; height: 2px; background: var(--border); border-radius: 2px; margin-top: 4px; position: relative; overflow: hidden; } .stale-fill { height: 100%; border-radius: 2px; transition: width 0.5s; } .candle-table-wrap { margin: 0 16px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); overflow: hidden; } .table-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--border); } .table-title { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text3); letter-spacing: 2px; } .live-dot { display: flex; align-items: center; gap: 5px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--green); } .live-dot::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 1.5s infinite; } .candle-table { width: 100%; } .candle-table .col-headers { display: grid; grid-template-columns: 20px 1fr 1fr 1fr 1fr; padding: 6px 12px; background: var(--bg3); } .col-h { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 1px; text-align: right; } .col-h:first-child { text-align: left; } .candle-row { display: grid; grid-template-columns: 20px 1fr 1fr 1fr 1fr; padding: 5px 12px; border-top: 1px solid rgba(30,45,61,0.5); font-family: 'Share Tech Mono', monospace; font-size: 10px; } .candle-row span { text-align: right; } .candle-row span:first-child { text-align: left; color: var(--text3); } .candle-row.bull span:not(:first-child) { color: var(--green); } .candle-row.bear span:not(:first-child) { color: var(--red); } .mini-chart { margin: 0 16px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); overflow: hidden; height: 160px; position: relative; } .mini-chart canvas { width: 100%; height: 100%; } .signal-card { margin: 0 16px 10px; border-radius: 10px; border: 1px solid; padding: 16px; position: relative; overflow: hidden; } .signal-card.long { border-color: rgba(0,230,118,0.4); background: linear-gradient(135deg, rgba(0,230,118,0.08) 0%, rgba(0,200,83,0.04) 100%); } .signal-card.short { border-color: rgba(255,23,68,0.4); background: linear-gradient(135deg, rgba(255,23,68,0.08) 0%, rgba(213,0,0,0.04) 100%); } .signal-card.wait { border-color: rgba(255,171,0,0.4); background: linear-gradient(135deg, rgba(255,171,0,0.08) 0%, rgba(255,143,0,0.04) 100%); } .signal-direction { font-family: 'Orbitron', monospace; font-size: 36px; font-weight: 900; line-height: 1; margin-bottom: 4px; } .signal-card.long .signal-direction { color: var(--green); } .signal-card.short .signal-direction { color: var(--red); } .signal-card.wait .signal-direction { color: var(--amber); font-size: 24px; } .signal-conf { position: absolute; top: 16px; right: 16px; text-align: right; } .conf-pct { font-family: 'Orbitron', monospace; font-size: 28px; font-weight: 700; } .signal-card.long .conf-pct { color: var(--green); } .signal-card.short .conf-pct { color: var(--red); } .signal-card.wait .conf-pct { color: var(--amber); } .conf-label { font-size: 9px; color: var(--text3); letter-spacing: 2px; font-family: 'Share Tech Mono', monospace; } .signal-meta { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 1px; margin-bottom: 10px; } .signal-desc { font-size: 13px; color: var(--text2); line-height: 1.5; } .conf-bar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; } .conf-fill { height: 100%; border-radius: 2px; transition: width 0.6s; } .signal-card.long .conf-fill { background: var(--green); } .signal-card.short .conf-fill { background: var(--red); } .signal-card.wait .conf-fill { background: var(--amber); } .warn-box { margin: 0 16px 10px; padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255,23,68,0.35); background: rgba(255,23,68,0.06); font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--red); line-height: 1.5; } .warn-box.amber-warn { border-color: rgba(255,171,0,0.35); background: rgba(255,171,0,0.06); color: var(--amber); } .checklist { margin: 0 16px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); overflow: hidden; } .checklist-title { padding: 10px 14px; font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 2px; border-bottom: 1px solid var(--border); } .check-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border-bottom: 1px solid rgba(30,45,61,0.5); font-size: 13px; line-height: 1.4; } .check-item:last-child { border-bottom: none; } .check-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; } .check-dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); } .check-dot.red { background: var(--red); } .check-dot.amber { background: var(--amber); } .check-key { font-weight: 700; color: var(--text); margin-right: 4px; } .check-val { color: var(--text2); } .bars-section { margin: 0 16px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); overflow: hidden; padding: 12px 14px; } .bars-title { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 2px; margin-bottom: 12px; } .bar-row { margin-bottom: 10px; display: flex; align-items: center; gap: 10px; } .bar-label { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text3); width: 80px; flex-shrink: 0; } .bar-track { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; } .bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s; } .bar-pct { font-family: 'Share Tech Mono', monospace; font-size: 10px; width: 32px; text-align: right; flex-shrink: 0; } .momentum-section { margin: 0 16px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); padding: 12px 14px; } .momentum-title { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 2px; margin-bottom: 8px; } .momentum-status { font-family: 'Share Tech Mono', monospace; font-size: 12px; font-weight: 700; margin-bottom: 8px; } .momentum-track { width: 100%; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 6px; } .momentum-fill { height: 100%; border-radius: 3px; } .momentum-labels { display: flex; justify-content: space-between; font-family: 'Share Tech Mono', monospace; font-size: 8px; color: var(--text3); } .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 0 16px 12px; } .stat-box { border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); padding: 10px; text-align: center; } .stat-label { font-family: 'Share Tech Mono', monospace; font-size: 8px; color: var(--text3); letter-spacing: 1px; margin-bottom: 5px; } .stat-val { font-family: 'Orbitron', monospace; font-size: 12px; font-weight: 700; } .signals-list { margin: 0 16px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); overflow: hidden; } .signals-title { padding: 10px 14px; font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 2px; border-bottom: 1px solid var(--border); } .sig-item { display: flex; align-items: flex-start; gap: 8px; padding: 10px 14px; border-bottom: 1px solid rgba(30,45,61,0.5); font-family: 'Share Tech Mono', monospace; font-size: 11px; line-height: 1.5; color: var(--text2); } .sig-item:last-child { border-bottom: none; } .sig-arrow { flex-shrink: 0; margin-top: 2px; font-size: 10px; } .sig-arrow.up { color: var(--green); } .sig-arrow.down { color: var(--red); } .sig-arrow.neutral { color: var(--amber); } .levels-section { margin: 0 16px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); overflow: hidden; } .levels-title { padding: 10px 14px; font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 2px; border-bottom: 1px solid var(--border); } .level-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid rgba(30,45,61,0.5); } .level-row:last-child { border-bottom: none; } .level-key { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 1px; } .level-val { font-family: 'Share Tech Mono', monospace; font-size: 13px; font-weight: 700; } .level-val.supply { color: var(--red); } .level-val.mid { color: var(--amber); } .level-val.demand { color: var(--green); } .level-val.live { color: var(--text); } .level-badge { font-family: 'Share Tech Mono', monospace; font-size: 9px; padding: 2px 8px; border-radius: 4px; letter-spacing: 1px; } .level-badge.supply { background: rgba(255,23,68,0.2); color: var(--red); border: 1px solid rgba(255,23,68,0.3); } .level-badge.mid { background: rgba(255,171,0,0.15); color: var(--amber); border: 1px solid rgba(255,171,0,0.3); } .level-badge.demand { background: rgba(0,230,118,0.15); color: var(--green); border: 1px solid rgba(0,230,118,0.3); } .level-badge.live { background: rgba(255,255,255,0.08); color: var(--text2); border: 1px solid var(--border2); } .trade-setup { margin: 0 16px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); overflow: hidden; } .trade-title { padding: 10px 14px; font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 2px; border-bottom: 1px solid var(--border); } .trade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); } .trade-cell { background: var(--bg2); padding: 12px 14px; } .trade-cell-label { font-family: 'Share Tech Mono', monospace; font-size: 8px; color: var(--text3); letter-spacing: 1px; margin-bottom: 5px; } .trade-cell-val { font-family: 'Share Tech Mono', monospace; font-size: 14px; font-weight: 700; } .trade-cell-val.entry { color: var(--green); } .trade-cell-val.stop { color: var(--red); } .trade-cell-val.tp { color: var(--green2); } .trade-cell-val.rr-bad { color: var(--red); } .trade-cell-val.rr-ok { color: var(--amber); } .trade-cell-val.rr-good { color: var(--green); } .trade-cell-val.neutral { color: var(--text2); } .dual-header { margin: 12px 16px; padding: 14px; border-radius: 10px; border: 1px solid rgba(0,229,255,0.3); background: rgba(0,229,255,0.04); text-align: center; } .dual-header-title { font-family: 'Orbitron', monospace; font-size: 11px; font-weight: 700; color: var(--cyan); letter-spacing: 3px; margin-bottom: 4px; } .dual-header-sub { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 2px; } .dual-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 16px; margin-bottom: 10px; } .dual-col { border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); overflow: hidden; } .dual-col-header { padding: 8px 10px; font-family: 'Orbitron', monospace; font-size: 9px; font-weight: 700; letter-spacing: 1px; text-align: center; border-bottom: 1px solid var(--border); } .dual-col-header.m1 { color: var(--amber); background: rgba(255,171,0,0.06); } .dual-col-header.m5 { color: var(--blue); background: rgba(41,121,255,0.06); } .dual-col-body { padding: 10px; } .dual-metric { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(30,45,61,0.6); } .dual-metric:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; } .dual-metric-label { font-family: 'Share Tech Mono', monospace; font-size: 8px; color: var(--text3); letter-spacing: 1px; margin-bottom: 3px; } .dual-metric-val { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700; } .dual-metric-sub { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); margin-top: 1px; } .dual-mini-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 4px; } .dual-mini-fill { height: 100%; border-radius: 2px; transition: width 0.5s; } .decision-card { margin: 0 16px 12px; border-radius: 12px; border: 2px solid; padding: 18px 16px; position: relative; overflow: hidden; } .decision-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; } .decision-card.buy { border-color: rgba(0,230,118,0.5); background: linear-gradient(135deg, rgba(0,230,118,0.07) 0%, rgba(0,200,83,0.03) 100%); } .decision-card.buy::before { background: linear-gradient(90deg, transparent, var(--green), transparent); } .decision-card.sell { border-color: rgba(255,23,68,0.5); background: linear-gradient(135deg, rgba(255,23,68,0.07) 0%, rgba(213,0,0,0.03) 100%); } .decision-card.sell::before { background: linear-gradient(90deg, transparent, var(--red), transparent); } .decision-card.wait { border-color: rgba(255,171,0,0.5); background: linear-gradient(135deg, rgba(255,171,0,0.07) 0%, rgba(255,143,0,0.03) 100%); } .decision-card.wait::before { background: linear-gradient(90deg, transparent, var(--amber), transparent); } .decision-card.no-trade { border-color: rgba(124,77,255,0.5); background: linear-gradient(135deg, rgba(124,77,255,0.07) 0%, rgba(100,60,220,0.03) 100%); } .decision-card.no-trade::before { background: linear-gradient(90deg, transparent, var(--purple), transparent); } .decision-label { font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 3px; margin-bottom: 6px; } .decision-card.buy .decision-label { color: var(--green); } .decision-card.sell .decision-label { color: var(--red); } .decision-card.wait .decision-label { color: var(--amber); } .decision-card.no-trade .decision-label { color: var(--purple); } .decision-main { font-family: 'Orbitron', monospace; font-weight: 900; font-size: 22px; line-height: 1.1; margin-bottom: 10px; letter-spacing: 1px; } .decision-card.buy .decision-main { color: var(--green); } .decision-card.sell .decision-main { color: var(--red); } .decision-card.wait .decision-main { color: var(--amber); } .decision-card.no-trade .decision-main { color: var(--purple); } .decision-reason { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 12px; } .decision-reason strong { color: var(--text); font-weight: 700; } .combined-conf { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; } .cconf-label { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 1px; } .cconf-val { font-family: 'Orbitron', monospace; font-size: 18px; font-weight: 700; margin-left: auto; } .decision-card.buy .cconf-val { color: var(--green); } .decision-card.sell .cconf-val { color: var(--red); } .decision-card.wait .cconf-val { color: var(--amber); } .decision-card.no-trade .cconf-val { color: var(--purple); } .cconf-bar { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; } .cconf-fill { height: 100%; border-radius: 2px; } .decision-card.buy .cconf-fill { background: var(--green); } .decision-card.sell .cconf-fill { background: var(--red); } .decision-card.wait .cconf-fill { background: var(--amber); } .decision-card.no-trade .cconf-fill { background: var(--purple); } .entry-params { margin: 0 16px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); overflow: hidden; } .ep-title { padding: 10px 14px; font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 2px; border-bottom: 1px solid var(--border); } .ep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); } .ep-cell { background: var(--bg2); padding: 11px 13px; } .ep-label { font-family: 'Share Tech Mono', monospace; font-size: 8px; color: var(--text3); letter-spacing: 1px; margin-bottom: 4px; } .ep-val { font-family: 'Share Tech Mono', monospace; font-size: 13px; font-weight: 700; } .ep-note { font-family: 'Share Tech Mono', monospace; font-size: 8px; color: var(--text3); margin-top: 2px; } .ep-val.green { color: var(--green); } .ep-val.red { color: var(--red); } .ep-val.amber { color: var(--amber); } .ep-val.cyan { color: var(--cyan); } .align-badge { margin: 0 16px 10px; display: flex; gap: 8px; } .ab { flex: 1; padding: 8px 10px; border-radius: 6px; border: 1px solid; text-align: center; font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 1px; } .ab.aligned { border-color: rgba(0,230,118,0.3); background: rgba(0,230,118,0.06); color: var(--green); } .ab.misaligned { border-color: rgba(255,23,68,0.3); background: rgba(255,23,68,0.06); color: var(--red); } .ab.checking { border-color: rgba(255,171,0,0.3); background: rgba(255,171,0,0.06); color: var(--amber); } .ab-icon { font-size: 14px; display: block; margin-bottom: 2px; } .fetch-dual { margin: 12px 16px; width: calc(100% - 32px); padding: 16px; border-radius: 10px; border: 1px solid rgba(0,229,255,0.5); background: rgba(0,229,255,0.06); cursor: pointer; font-family: 'Orbitron', monospace; font-weight: 700; font-size: 13px; letter-spacing: 2px; color: var(--cyan); display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s; box-shadow: 0 0 20px rgba(0,229,255,0.08); } .fetch-dual:active { transform: scale(0.98); background: rgba(0,229,255,0.12); } .loading-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(8,11,15,0.88); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 16px; } .loading-overlay.show { display: flex; } .loading-spinner { width: 44px; height: 44px; border: 2px solid var(--border); border-top-color: var(--cyan); border-radius: 50%; animation: spin 0.8s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } } .loading-text { font-family: 'Orbitron', monospace; font-size: 11px; letter-spacing: 3px; color: var(--cyan); } .loading-sub { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 2px; } .hidden { display: none !important; } .dual-instrument-row { display: flex; gap: 8px; padding: 0 16px; margin-bottom: 8px; align-items: center; } .dual-inst-label { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 2px; flex-shrink: 0; } ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; } .badge-row { margin: 0 16px 8px; display: flex; align-items: center; gap: 6px; } .badge { font-family: 'Share Tech Mono', monospace; font-size: 9px; padding: 3px 8px; border-radius: 20px; letter-spacing: 1px; border: 1px solid; } .badge.amber-b { border-color: rgba(255,171,0,0.4); color: var(--amber); background: rgba(255,171,0,0.08); } .badge.cyan-b { border-color: rgba(0,229,255,0.4); color: var(--cyan); background: rgba(0,229,255,0.06); } .badge.green-b { border-color: rgba(0,230,118,0.4); color: var(--green); background: rgba(0,230,118,0.06); } .badge.red-b { border-color: rgba(255,23,68,0.4); color: var(--red); background: rgba(255,23,68,0.06); } .no-align-screen { margin: 20px 16px; padding: 30px 20px; border-radius: 12px; border: 1px solid rgba(124,77,255,0.3); background: rgba(124,77,255,0.05); text-align: center; } .no-align-icon { font-size: 36px; margin-bottom: 12px; } .no-align-title { font-family: 'Orbitron', monospace; font-size: 14px; color: var(--purple); letter-spacing: 2px; margin-bottom: 8px; } .no-align-text { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--text3); line-height: 1.7; } .live-price-ticker { margin: 0 16px 8px; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(0,229,255,0.2); background: rgba(0,229,255,0.04); display: flex; justify-content: space-between; align-items: center; } .ticker-label { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 2px; } .ticker-price { font-family: 'Orbitron', monospace; font-size: 16px; font-weight: 700; color: var(--cyan); transition: color 0.2s; } .ticker-price.up { color: var(--green); } .ticker-price.down { color: var(--red); } .ticker-time { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); } .error-box { margin: 0 16px 12px; padding: 14px; border-radius: 8px; border: 1px solid rgba(255,23,68,0.4); background: rgba(255,23,68,0.06); font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--red); line-height: 1.6; }</style></head><body><div class="app"> <div class="header"> <div> <div class="logo">SYNTH<span>.</span>READ</div> <div class="logo-sub">DERIV LIVE · V6 · REAL DATA</div> </div> <div class="ws-status"> <div class="ws-dot" id="ws-dot"></div> <div class="ws-label" id="ws-label">OFFLINE</div> </div> </div> <div class="mode-tabs"> <div class="mode-tab" id="tab-scalp" onclick="setMode('scalp')"> <span class="tab-num">5C</span> <span class="tab-label">SCALP</span> </div> <div class="mode-tab" id="tab-balanced" onclick="setMode('balanced')"> <span class="tab-num">10C</span> <span class="tab-label">BALANCED</span> </div> <div class="mode-tab" id="tab-dual" onclick="setMode('dual')"> <span class="tab-num">DUAL</span> <span class="tab-label">READ</span> </div> </div> <div class="section" id="section-scalp"> <div class="info-box amber"> Scalp Mode — 5 live candles from Deriv. Best for M1-M5.</div> <div class="instruments"> <div class="inst-btn active" id="scalp-inst-R_75" onclick="selectInst('scalp','R_75')">VX75</div> <div class="inst-btn" id="scalp-inst-R_10" onclick="selectInst('scalp','R_10')">VX10</div> <div class="inst-btn" id="scalp-inst-1HZ10V" onclick="selectInst('scalp','1HZ10V')">EGI1</div> <div class="inst-btn" id="scalp-inst-stp" onclick="selectInst('scalp','stp')">STEP</div>
+          <div class="inst-btn" id="scalp-inst-frxXAUUSD" onclick="selectInst('scalp','frxXAUUSD')">XAU/USD</div> <div class="inst-btn" id="scalp-inst-cryBTCUSD" onclick="selectInst('scalp','cryBTCUSD')">BTC/USD</div> </div> <div class="tf-row"> <div class="tf-btn active" id="scalp-tf-60" onclick="selectTF('scalp','60')">M1</div> <div class="tf-btn" id="scalp-tf-300" onclick="selectTF('scalp','300')">M5</div> <div class="tf-btn" id="scalp-tf-900" onclick="selectTF('scalp','900')">M15</div> <div class="tf-btn" id="scalp-tf-1800" onclick="selectTF('scalp','1800')">M30</div> </div> <button class="fetch-btn" onclick="fetchAnalyze('scalp')">⟳ &nbsp;FETCH LIVE &amp; ANALYZE</button> <div class="stale-bar"> <div> <div class="stale-label">DATA AGE — RE-FETCH WHEN RED</div> <div class="stale-progress"><div class="stale-fill" id="scalp-stale-fill" style="width:70%;background:var(--red)"></div></div> </div> <div class="stale-status" id="scalp-stale-txt">STALE</div> </div> <div id="scalp-results" class="hidden"> <div id="scalp-live-ticker" class="live-price-ticker"> <div><div class="ticker-label">LIVE PRICE</div><div class="ticker-price" id="scalp-tick-price">—</div></div> <div class="ticker-time" id="scalp-tick-time">—</div> </div> <div class="candle-table-wrap"> <div class="table-header"> <div class="table-title">LIVE CANDLES — DERIV</div> <div class="live-dot">LIVE</div> </div> <div class="candle-table"> <div class="col-headers"> <span class="col-h">#</span><span class="col-h">O</span><span class="col-h">H</span><span class="col-h">L</span><span class="col-h">C</span> </div> <div id="scalp-candle-rows"></div> </div> </div> <div class="badge-row"><div class="badge amber-b">SCALP · 5C · LIVE · <span id="scalp-tf-badge">M1</span></div><div class="badge green-b">DERIV API</div></div> <div class="mini-chart"><canvas id="scalp-chart"></canvas></div> <div id="scalp-warn" class="warn-box hidden"></div> <div class="signal-card" id="scalp-signal-card"> <div class="signal-direction" id="scalp-direction">—</div> <div class="signal-conf"><div class="conf-pct" id="scalp-conf-pct">—</div><div class="conf-label">CONFIDENCE</div><div class="conf-bar"><div class="conf-fill" id="scalp-conf-bar" style="width:0%"></div></div></div> <div class="signal-meta" id="scalp-signal-meta">LOADING...</div> <div class="signal-desc" id="scalp-desc">Fetching live data...</div> </div> <div class="checklist"><div class="checklist-title">YOUR SIMPLE CHECKLIST</div><div id="scalp-checklist"></div></div> <div class="bars-section"><div class="bars-title">TREND STRENGTH BREAKDOWN</div><div id="scalp-bars"></div></div> <div class="momentum-section"> <div class="momentum-title">MOMENTUM EXHAUSTION</div> <div class="momentum-status" id="scalp-momentum-status">—</div> <div class="momentum-track"><div class="momentum-fill" id="scalp-momentum-fill" style="width:0%"></div></div> <div class="momentum-labels"><span>FRESH</span><span>CAUTION</span><span>EXHAUSTED</span></div> </div> <div class="stats-grid"> <div class="stat-box"><div class="stat-label">STRUCTURE</div><div class="stat-val" id="scalp-struct">—</div></div> <div class="stat-box"><div class="stat-label">AVG RANGE</div><div class="stat-val" id="scalp-atr">—</div></div> <div class="stat-box"><div class="stat-label">LAST BODY%</div><div class="stat-val" id="scalp-body">—</div></div> </div> <div class="signals-list"><div class="signals-title">SIGNALS DETECTED</div><div id="scalp-signals"></div></div> <div class="levels-section"><div class="levels-title">KEY LEVELS</div><div id="scalp-levels"></div></div> <div class="trade-setup"><div class="trade-title">TRADE SETUP — SCALP</div><div class="trade-grid" id="scalp-trade-grid"></div></div> </div> </div> <div class="section" id="section-balanced"> <div class="info-box amber"> Balanced Mode — 10 live candles from Deriv. Best for M15-H1.</div> <div class="instruments"> <div class="inst-btn active" id="bal-inst-R_75" onclick="selectInst('balanced','R_75')">VX75</div> <div class="inst-btn" id="bal-inst-R_10" onclick="selectInst('balanced','R_10')">VX10</div> <div class="inst-btn" id="bal-inst-1HZ10V" onclick="selectInst('balanced','1HZ10V')">EGI1</div> <div class="inst-btn" id="bal-inst-stp" onclick="selectInst('balanced','stp')">STEP</div>
+        <div class="inst-btn" id="bal-inst-frxXAUUSD" onclick="selectInst('balanced','frxXAUUSD')">XAU/USD</div> <div class="inst-btn" id="bal-inst-cryBTCUSD" onclick="selectInst('balanced','cryBTCUSD')">BTC/USD</div> </div> <div class="tf-row"> <div class="tf-btn" id="bal-tf-300" onclick="selectTF('balanced','300')">M5</div> <div class="tf-btn active" id="bal-tf-900" onclick="selectTF('balanced','900')">M15</div> <div class="tf-btn" id="bal-tf-1800" onclick="selectTF('balanced','1800')">M30</div> <div class="tf-btn" id="bal-tf-3600" onclick="selectTF('balanced','3600')">H1</div> <div class="tf-btn" id="bal-tf-14400" onclick="selectTF('balanced','14400')">H4</div> </div> <button class="fetch-btn" onclick="fetchAnalyze('balanced')">⟳ &nbsp;FETCH LIVE &amp; ANALYZE</button> <div class="stale-bar"> <div> <div class="stale-label">DATA AGE — RE-FETCH WHEN RED</div> <div class="stale-progress"><div class="stale-fill" id="bal-stale-fill" style="width:70%;background:var(--red)"></div></div> </div> <div class="stale-status" id="bal-stale-txt">STALE</div> </div> <div id="bal-results" class="hidden"> <div id="bal-live-ticker" class="live-price-ticker"> <div><div class="ticker-label">LIVE PRICE</div><div class="ticker-price" id="bal-tick-price">—</div></div> <div class="ticker-time" id="bal-tick-time">—</div> </div> <div class="candle-table-wrap"> <div class="table-header"><div class="table-title">LIVE CANDLES — DERIV</div><div class="live-dot">LIVE</div></div> <div class="candle-table"> <div class="col-headers"><span class="col-h">#</span><span class="col-h">O</span><span class="col-h">H</span><span class="col-h">L</span><span class="col-h">C</span></div> <div id="bal-candle-rows"></div> </div> </div> <div class="badge-row"><div class="badge amber-b">BALANCED · 10C · LIVE · <span id="bal-tf-badge">M15</span></div><div class="badge green-b">DERIV API</div></div> <div class="mini-chart"><canvas id="bal-chart"></canvas></div> <div id="bal-warn" class="warn-box hidden"></div> <div class="signal-card" id="bal-signal-card"> <div class="signal-direction" id="bal-direction">—</div> <div class="signal-conf"><div class="conf-pct" id="bal-conf-pct">—</div><div class="conf-label">CONFIDENCE</div><div class="conf-bar"><div class="conf-fill" id="bal-conf-bar" style="width:0%"></div></div></div> <div class="signal-meta" id="bal-signal-meta">LOADING...</div> <div class="signal-desc" id="bal-desc">Fetching live data...</div> </div> <div class="checklist"><div class="checklist-title">YOUR SIMPLE CHECKLIST</div><div id="bal-checklist"></div></div> <div class="bars-section"><div class="bars-title">TREND STRENGTH BREAKDOWN</div><div id="bal-bars"></div></div> <div class="momentum-section"> <div class="momentum-title">MOMENTUM EXHAUSTION</div> <div class="momentum-status" id="bal-momentum-status">—</div> <div class="momentum-track"><div class="momentum-fill" id="bal-momentum-fill" style="width:0%"></div></div> <div class="momentum-labels"><span>FRESH</span><span>CAUTION</span><span>EXHAUSTED</span></div> </div> <div class="stats-grid"> <div class="stat-box"><div class="stat-label">STRUCTURE</div><div class="stat-val" id="bal-struct">—</div></div> <div class="stat-box"><div class="stat-label">AVG RANGE</div><div class="stat-val" id="bal-atr">—</div></div> <div class="stat-box"><div class="stat-label">LAST BODY%</div><div class="stat-val" id="bal-body">—</div></div> </div> <div class="signals-list"><div class="signals-title">SIGNALS DETECTED</div><div id="bal-signals"></div></div> <div class="levels-section"><div class="levels-title">KEY LEVELS</div><div id="bal-levels"></div></div> <div class="trade-setup"><div class="trade-title">TRADE SETUP — BALANCED</div><div class="trade-grid" id="bal-trade-grid"></div></div> </div> </div> <div class="section" id="section-dual"> <div class="dual-header"> <div class="dual-header-title"> DUAL READ MODE</div> <div class="dual-header-sub">M1 SCALP (5C) · M5 TREND (10C) · COMBINED DECISION · LIVE</div> </div> <div class="dual-instrument-row"> <div class="dual-inst-label">INSTRUMENT:</div> <div style="flex:1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px"> <div class="inst-btn active" id="dual-inst-R_75" onclick="selectInst('dual','R_75')">VX75</div> <div class="inst-btn" id="dual-inst-R_10" onclick="selectInst('dual','R_10')">VX10</div> <div class="inst-btn" id="dual-inst-1HZ10V" onclick="selectInst('dual','1HZ10V')">EGI1</div> <div class="inst-btn" id="dual-inst-stp" onclick="selectInst('dual','stp')">STEP</div>
+      <div class="inst-btn" id="dual-inst-frxXAUUSD" onclick="selectInst('dual','frxXAUUSD')">XAU/USD</div> <div class="inst-btn" id="dual-inst-cryBTCUSD" onclick="selectInst('dual','cryBTCUSD')">BTC/USD</div> </div> </div> <button class="fetch-dual" onclick="fetchDual()">⟳ &nbsp;DUAL LIVE FETCH &amp; ANALYZE</button> <div class="stale-bar" style="margin-bottom:8px"> <div style="flex:1"> <div class="stale-label">DATA AGE — RE-FETCH WHEN RED</div> <div class="stale-progress"><div class="stale-fill" id="dual-stale-fill" style="width:70%;background:var(--red)"></div></div> </div> <div class="stale-status" id="dual-stale-txt">STALE</div> </div> <div id="dual-results" class="hidden"> <div class="align-badge" id="dual-align-badges"></div> <div id="dual-no-align" class="hidden"> <div class="no-align-screen"> <div class="no-align-icon">⚠️</div> <div class="no-align-title">TRENDS DON'T ALIGN</div> <div class="no-align-text" id="dual-no-align-text">M1 and M5 are conflicting.</div> </div> </div> <div id="dual-aligned-content" class="hidden"> <div class="dual-columns"> <div class="dual-col"><div class="dual-col-header m1"> M1 SCALP</div><div class="dual-col-body" id="dual-m1-body"></div></div> <div class="dual-col"><div class="dual-col-header m5"> M5 TREND</div><div class="dual-col-body" id="dual-m5-body"></div></div> </div> <div class="decision-card" id="dual-decision-card"> <div class="decision-label" id="dual-decision-label">COMBINED ANALYSIS</div> <div class="decision-main" id="dual-decision-main">ANALYZING...</div> <div class="decision-reason" id="dual-decision-reason">Loading live data...</div> <div class="combined-conf"> <div class="cconf-label">COMBINED CONFIDENCE</div> <div class="cconf-bar"><div class="cconf-fill" id="dual-cconf-bar" style="width:0%"></div></div> <div class="cconf-val" id="dual-cconf-val">—</div> </div> </div> <div class="entry-params"> <div class="ep-title">SMART ENTRY PARAMETERS</div> <div class="ep-grid" id="dual-entry-grid"></div> </div> </div> </div> </div> </div></div><div class="loading-overlay" id="loading"> <div class="loading-spinner"></div> <div class="loading-text" id="loading-text">CONNECTING...</div> <div class="loading-sub" id="loading-sub">DERIV API</div></div><script>
+// ========== CONFIG ==========
+const API_TOKEN = '0LsLoGK9vxd9E4W';
+const WS_URL = 'wss://ws.binaryws.com/websockets/v3?app_id=1089';
+// FIX: Correct Deriv API symbol codes
+const SYMBOL_LABELS = { 'R_75': 'VX75', 'R_10': 'VX10', '1HZ10V': 'EGI1', 'stp': 'STEP', 'frxXAUUSD': 'XAU/USD', 'cryBTCUSD': 'BTC/USD' };
+const API_SYMBOLS = { 'R_75': 'R_75', 'R_10': 'R_10', '1HZ10V': '1HZ10V', 'stp': 'stp', 'frxXAUUSD': 'frxXAUUSD', 'cryBTCUSD': 'cryBTCUSD' };
+const TF_LABELS = { '60': 'M1', '300': 'M5', '900': 'M15', '1800': 'M30', '3600': 'H1', '14400': 'H4' };
+
+// ========== STATE ==========
+const state = {
+  mode: 'dual',
+  scalp: { inst: 'R_75', tf: '60' },
+  balanced: { inst: 'R_75', tf: '900' },
+  dual: { inst: 'R_75' },
+  ws: null,
+  wsReady: false,
+  reqId: 1,
+  pendingRequests: new Map(),  // FIX: Track multiple pending requests
+  lastPrices: {}
+};
+
+// ========== WEBSOCKET (FIXED) ==========
+function connectWS() {
+  return new Promise((resolve, reject) => {
+    updateWSStatus('connecting');
+    const ws = new WebSocket(WS_URL);
+    state.ws = ws;
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ authorize: API_TOKEN }));
+    };
+    ws.onmessage = (e) => {
+      const msg = JSON.parse(e.data);
+      if (msg.msg_type === 'authorize') {
+        if (msg.error) {
+          updateWSStatus('error');
+          reject(new Error('Auth failed: ' + msg.error.message));
+        } else {
+          state.wsReady = true;
+          updateWSStatus('connected');
+          resolve(ws);
+        }
+        return;
+      }
+      // FIX: Handle multiple pending requests using Map
+      if (msg.req_id && state.pendingRequests.has(msg.req_id)) {
+        const { resolve, reject } = state.pendingRequests.get(msg.req_id);
+        state.pendingRequests.delete(msg.req_id);
+        if (msg.error) reject(new Error(msg.error.message));
+        else resolve(msg);
+      }
+    };
+    ws.onerror = () => {
+      updateWSStatus('error');
+      reject(new Error('WebSocket error'));
+    };
+    ws.onclose = () => {
+      state.wsReady = false;
+      updateWSStatus('offline');
+      // Clean up pending requests
+      state.pendingRequests.forEach(({ reject }) => reject(new Error('WebSocket closed')));
+      state.pendingRequests.clear();
+    };
+  });
+}
+
+function wsRequest(payload) {
+  return new Promise(async (resolve, reject) => {
+    if (!state.ws || state.ws.readyState !== WebSocket.OPEN) {
+      try { await connectWS(); } catch(e) { reject(e); return; }
+    }
+    const id = state.reqId++;
+    state.pendingRequests.set(id, { resolve, reject });  // FIX: Store in Map
+    state.ws.send(JSON.stringify({ ...payload, req_id: id }));
+    setTimeout(() => {
+      if (state.pendingRequests.has(id)) {
+        state.pendingRequests.delete(id);
+        reject(new Error('Request timeout'));
+      }
+    }, 15000);
+  });
+}
+
+async function fetchCandles(symbol, granularity, count) {
+  const resp = await wsRequest({
+    ticks_history: symbol,
+    adjust_start_time: 1,
+    count: count + 3,
+    end: 'latest',
+    granularity: parseInt(granularity),
+    style: 'candles'
+  });
+  const candles = (resp.candles || []).map(c => ({
+    o: parseFloat(c.open),
+    h: parseFloat(c.high),
+    l: parseFloat(c.low),
+    c: parseFloat(c.close),
+    epoch: c.epoch
+  }));
+  return candles.slice(-count);
+}
+
+async function fetchTick(symbol) {
+  const resp = await wsRequest({ ticks: symbol });
+  return resp.tick;
+}
+
+// ========== MODE / INSTRUMENT / TF ==========
+setMode('dual');
+
+function setMode(m) {
+  state.mode = m;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.mode-tab').forEach(t => { t.className = 'mode-tab'; });
+  document.getElementById('section-' + m).classList.add('active');
+  document.getElementById('tab-' + m).classList.add('active-' + m);
+}
+
+function selectInst(mode, inst) {
+  const prefix = mode === 'balanced' ? 'bal' : mode;
+  document.querySelectorAll(`[id^="${prefix}-inst-"]`).forEach(el => el.classList.remove('active'));
+  document.getElementById(`${prefix}-inst-${inst}`).classList.add('active');
+  // FIX: Map UI symbol to correct API symbol
+  state[mode].inst = API_SYMBOLS[inst] || inst;
+}
+
+function selectTF(mode, tf) {
+  const prefix = mode === 'balanced' ? 'bal' : mode;
+  document.querySelectorAll(`[id^="${prefix}-tf-"]`).forEach(el => el.classList.remove('active'));
+  document.getElementById(`${prefix}-tf-${tf}`).classList.add('active');
+  state[mode].tf = tf;
+}
+
+// ========== FORMAT ==========
+function fmt(val, inst) {
+  if (!val && val !== 0) return '—';
+  const decimals = ['frxXAUUSD','cryBTCUSD'].includes(inst) ? 2 : ['1HZ10V','stp'].includes(inst) ? 5 : 4;
+  return parseFloat(val).toFixed(decimals);
+}
+
+function fmtTime(epoch) {
+  const d = new Date((epoch || Date.now()/1000) * 1000);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+// ========== ANALYSIS ENGINE (ADVANCED) ==========
+// Detects swing highs/lows, market structure, BOS, and proper trend direction
+
+function findSwingHighs(candles, lookback = 2) {
+  const swings = [];
+  for (let i = lookback; i < candles.length - lookback; i++) {
+    const current = candles[i].h;
+    const prev = candles.slice(i - lookback, i).every(c => c.h <= current);
+    const next = candles.slice(i + 1, i + lookback + 1).every(c => c.h <= current);
+    if (prev && next) swings.push({ idx: i, price: current, type: 'high' });
+  }
+  return swings;
+}
+
+function findSwingLows(candles, lookback = 2) {
+  const swings = [];
+  for (let i = lookback; i < candles.length - lookback; i++) {
+    const current = candles[i].l;
+    const prev = candles.slice(i - lookback, i).every(c => c.l >= current);
+    const next = candles.slice(i + 1, i + lookback + 1).every(c => c.l >= current);
+    if (prev && next) swings.push({ idx: i, price: current, type: 'low' });
+  }
+  return swings;
+}
+
+function analyzeStructure(candles) {
+  const swingHighs = findSwingHighs(candles);
+  const swingLows = findSwingLows(candles);
+  
+  // Get recent significant swings (last 2-3 swings of each type)
+  const recentHighs = swingHighs.slice(-3);
+  const recentLows = swingLows.slice(-3);
+  
+  // Check for Higher Highs / Higher Lows (Bullish)
+  let hhhl = false;
+  if (recentHighs.length >= 2 && recentLows.length >= 2) {
+    const higherHighs = recentHighs[recentHighs.length - 1].price > recentHighs[0].price;
+    const higherLows = recentLows[recentLows.length - 1].price > recentLows[0].price;
+    hhhl = higherHighs && higherLows;
+  }
+  
+  // Check for Lower Highs / Lower Lows (Bearish)
+  let lhll = false;
+  if (recentHighs.length >= 2 && recentLows.length >= 2) {
+    const lowerHighs = recentHighs[recentHighs.length - 1].price < recentHighs[0].price;
+    const lowerLows = recentLows[recentLows.length - 1].price < recentLows[0].price;
+    lhll = lowerHighs && lowerLows;
+  }
+  
+  // Check for Break of Structure (BOS)
+  const last = candles[candles.length - 1];
+  const lastSwingHigh = swingHighs[swingHighs.length - 1];
+  const lastSwingLow = swingLows[swingLows.length - 1];
+  
+  let bullishBOS = false;
+  let bearishBOS = false;
+  
+  if (lastSwingHigh && last.c > lastSwingHigh.price) {
+    bullishBOS = true;
+  }
+  if (lastSwingLow && last.c < lastSwingLow.price) {
+    bearishBOS = true;
+  }
+  
+  return { swingHighs, swingLows, hhhl, lhll, bullishBOS, bearishBOS, lastSwingHigh, lastSwingLow };
+}
+
+function analyzeCandles(candles, inst) {
+  const last = candles[candles.length - 1];
+  const first = candles[0];
+  const highs = candles.map(c => c.h);
+  const lows = candles.map(c => c.l);
+  const supply = Math.max(...highs);
+  const demand = Math.min(...lows);
+  const mid = (supply + demand) / 2;
+  const range = supply - demand;
+  const atr = candles.reduce((s, c) => s + (c.h - c.l), 0) / candles.length;
+  
+  // Use ALL available candles for trend determination (5 for M1, 10 for M5)
+  const bullCandles = candles.filter(c => c.c > c.o).length;
+  const bearCandles = candles.filter(c => c.c < c.o).length;
+  const neutralCandles = candles.filter(c => c.c === c.o).length;
+  
+  // Moving averages for trend
+  const closes = candles.map(c => c.c);
+  const sma5 = closes.slice(-5).reduce((a, b) => a + b, 0) / Math.min(5, closes.length);
+  const priceVsSMA = ((last.c - sma5) / sma5) * 100;
+  
+  // Structure analysis
+  const structure = analyzeStructure(candles);
+  
+  // Progressive trend analysis using ALL candles
+  // 1. Check overall price change from first to last
+  const totalPriceChange = ((last.c - first.o) / first.o) * 100;
+  
+  // 2. Check direction consistency (percentage of candles in dominant direction)
+  const dominantDirection = bullCandles > bearCandles ? 'bull' : 'bear';
+  const directionStrength = Math.max(bullCandles, bearCandles) / candles.length;
+  
+  // 3. Check last half of candles (recent momentum)
+  const halfIdx = Math.floor(candles.length / 2);
+  const recentCandles = candles.slice(halfIdx);
+  const recentBull = recentCandles.filter(c => c.c > c.o).length;
+  const recentBear = recentCandles.filter(c => c.c < c.o).length;
+  const recentMomentum = recentBull > recentBear ? 'bull' : 'bear';
+  
+  // 4. Higher highs / higher lows or lower highs / lower lows
+  const hasBullStructure = structure.hhhl;
+  const hasBearStructure = structure.lhll;
+  
+  // 5. Break of structure
+  const hasBullishBOS = structure.bullishBOS;
+  const hasBearishBOS = structure.bearishBOS;
+  
+  // Determine final trend direction
+  let trendUp = false;
+  let trendDirection = 'NEUTRAL';
+  let direction = 'WAIT';
+  let confidence = 50;
+  
+  // Scoring system for trend determination
+  let bullishScore = 0;
+  let bearishScore = 0;
+  
+  // Price change factor
+  if (totalPriceChange > 0.1) bullishScore += 2;
+  if (totalPriceChange > 0.5) bullishScore += 2;
+  if (totalPriceChange < -0.1) bearishScore += 2;
+  if (totalPriceChange < -0.5) bearishScore += 2;
+  
+  // Candle direction factor
+  if (dominantDirection === 'bull') bullishScore += directionStrength * 3;
+  if (dominantDirection === 'bear') bearishScore += directionStrength * 3;
+  
+  // Recent momentum factor
+  if (recentMomentum === 'bull') bullishScore += 2;
+  if (recentMomentum === 'bear') bearishScore += 2;
+  
+  // Structure factor
+  if (hasBullStructure) bullishScore += 3;
+  if (hasBearStructure) bearishScore += 3;
+  
+  // BOS factor (strong signal)
+  if (hasBullishBOS) bullishScore += 4;
+  if (hasBearishBOS) bearishScore += 4;
+  
+  // SMA comparison
+  if (priceVsSMA > 0.05) bullishScore += 1;
+  if (priceVsSMA < -0.05) bearishScore += 1;
+  
+  // Last candle check (tiebreaker)
+  if (last.c > last.o) bullishScore += 1;
+  if (last.c < last.o) bearishScore += 1;
+  
+  // Determine final direction based on scores
+  const totalScore = bullishScore + bearishScore || 1;
+  const bullPercent = (bullishScore / totalScore) * 100;
+  
+  if (bullishScore > bearishScore + 2) {
+    trendUp = true;
+    trendDirection = 'BULLISH';
+    direction = 'LONG';
+    confidence = Math.min(95, 50 + (bullishScore - bearishScore) * 5);
+  } else if (bearishScore > bullishScore + 2) {
+    trendUp = false;
+    trendDirection = 'BEARISH';
+    direction = 'SHORT';
+    confidence = Math.min(95, 50 + (bearishScore - bullishScore) * 5);
+  } else {
+    // Neutral/undecided - use last candle direction as weak signal
+    trendUp = last.c >= last.o;
+    trendDirection = trendUp ? 'BULLISH' : 'BEARISH';
+    direction = trendUp ? 'LONG' : 'SHORT';
+    confidence = 45;
+  }
+  
+  // Position within range
+  const pricePos = range > 0 ? ((last.c - demand) / range) * 100 : 50;
+  const nearSupply = pricePos > 85;
+  const nearDemand = pricePos < 15;
+  const atMidpoint = pricePos >= 45 && pricePos <= 55;
+  
+  // Body percentage of last candle
+  const lastBody = Math.abs(last.c - last.o);
+  const lastRange = last.h - last.l;
+  const bodyPct = lastRange > 0 ? Math.round((lastBody / lastRange) * 100) : 50;
+  
+  // ATR-based calculations for SL/TP
+  const slOffset = atr * 0.3;
+  const tp1Offset = atr * 1.0;
+  const tp2Offset = atr * 2.0;
+  
+  // Dynamic SL/TP based on swing points if available
+  let sl, tp1, tp2, rrRatio;
+  
+  if (trendUp) {
+    // For LONG: SL below demand or last swing low, TP toward supply
+    sl = structure.lastSwingLow ? Math.max(structure.lastSwingLow.price - slOffset * 0.5, demand) : demand - slOffset;
+    tp1 = last.c + tp1Offset;
+    tp2 = supply - atr * 0.2; // Near the supply zone
+    const risk = last.c - sl;
+    const reward1 = tp1 - last.c;
+    const reward2 = tp2 - last.c;
+    rrRatio = risk > 0 ? Math.max(reward1, reward2 * 0.5) / risk : 1;
+  } else {
+    // For SHORT: SL above supply or last swing high, TP toward demand
+    sl = structure.lastSwingHigh ? Math.min(structure.lastSwingHigh.price + slOffset * 0.5, supply) : supply + slOffset;
+    tp1 = last.c - tp1Offset;
+    tp2 = demand + atr * 0.2; // Near the demand zone
+    const risk = sl - last.c;
+    const reward1 = last.c - tp1;
+    const reward2 = last.c - tp2;
+    rrRatio = risk > 0 ? Math.max(reward1, reward2 * 0.5) / risk : 1;
+  }
+  
+  // Momentum/Exhaustion calculation
+  const recentVolatility = recentCandles.reduce((s, c) => s + (c.h - c.l), 0) / recentCandles.length;
+  const avgVolatility = atr;
+  const momentumSurge = recentVolatility > avgVolatility * 1.2;
+  
+  let exh = 50;
+  if (nearSupply && trendUp) exh = 85;
+  else if (nearDemand && !trendUp) exh = 85;
+  else if (nearSupply && !trendUp) exh = 20;
+  else if (nearDemand && trendUp) exh = 20;
+  else exh = pricePos;
+  
+  let exhLabel, exhColor;
+  if (exh > 75) {
+    exhLabel = 'Near exhaustion — high risk zone';
+    exhColor = 'var(--red)';
+  } else if (exh > 55) {
+    exhLabel = 'Building — approaching extreme';
+    exhColor = 'var(--amber)';
+  } else if (exh < 25) {
+    exhLabel = 'Fresh at support — optimal entry';
+    exhColor = 'var(--green)';
+  } else if (exh < 45) {
+    exhLabel = 'Good zone — room to move';
+    exhColor = 'var(--cyan)';
+  } else {
+    exhLabel = 'Mid-range — moderate risk';
+    exhColor = 'var(--amber)';
+  }
+  
+  // Generate signals
+  const signals = [];
+  
+  if (hasBullishBOS && trendUp) {
+    signals.push({ type: 'up', text: `Bullish BOS — broke above swing high at ${fmt(structure.lastSwingHigh?.price, inst)}` });
+  }
+  if (hasBearishBOS && !trendUp) {
+    signals.push({ type: 'down', text: `Bearish BOS — broke below swing low at ${fmt(structure.lastSwingLow?.price, inst)}` });
+  }
+  if (hasBullStructure && trendUp) {
+    signals.push({ type: 'up', text: 'HH+HL pattern — bullish structure intact' });
+  }
+  if (hasBearStructure && !trendUp) {
+    signals.push({ type: 'down', text: 'LH+LL pattern — bearish structure intact' });
+  }
+  if (bodyPct > 75) {
+    signals.push({ type: trendUp ? 'up' : 'down', text: `Strong ${trendUp ? 'bullish' : 'bearish'} momentum — ${bodyPct}% body` });
+  }
+  if (momentumSurge) {
+    signals.push({ type: 'neutral', text: 'Volatility expanding — range expansion detected' });
+  }
+  if (nearSupply && trendUp) {
+    signals.push({ type: 'down', text: 'Price at supply zone — consider taking profits' });
+  }
+  if (nearDemand && !trendUp) {
+    signals.push({ type: 'up', text: 'Price at demand zone — potential reversal zone' });
+  }
+  if (atMidpoint) {
+    signals.push({ type: 'neutral', text: 'Price at midpoint — equilibrium zone' });
+  }
+  if (rrRatio < 1.5) {
+    signals.push({ type: 'neutral', text: `Poor R:R ${rrRatio.toFixed(1)}:1 — wait for better entry` });
+  }
+  if (signals.length === 0) {
+    signals.push({ type: 'neutral', text: 'No clear signals — market may be consolidating' });
+  }
+  
+  // Final confidence calculation
+  let conf = Math.round(confidence);
+  conf = Math.min(97, Math.max(35, conf));
+  
+  const rr = +rrRatio.toFixed(1);
+  const rrBad = rr < 1.5;
+  
+  return {
+    candles, last, supply, demand, mid, atr: +atr.toFixed(6), bodyPct, 
+    structure: trendDirection, direction, trendUp,
+    pricePos: Math.round(pricePos), bos: hasBullishBOS || hasBearishBOS, conf, signals, 
+    sl, tp1, tp2, rr, rrBad,
+    swingHighs: structure.swingHighs, swingLows: structure.swingLows,
+    lastSwingHigh: structure.lastSwingHigh, lastSwingLow: structure.lastSwingLow,
+    hasBullStructure: hasBullStructure, hasBearStructure: hasBearStructure,
+    bullishBOS: hasBullishBOS, bearishBOS: hasBearishBOS,
+    exh: Math.round(exh), exhLabel, exhColor, nearSupply, nearDemand,
+    priceChange: +totalPriceChange.toFixed(4),
+    bullScore: bullishScore, bearScore: bearishScore
+  };
+}
+
+// ========== RENDER HELPERS ==========
+function renderHorizontalCandles(containerId, candles, inst, label) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  // Calculate min/max for scaling
+  const highs = candles.map(c => c.h);
+  const lows = candles.map(c => c.l);
+  const maxP = Math.max(...highs);
+  const minP = Math.min(...lows);
+  const range = maxP - minP || 1;
+  
+  // Calculate average close for label color
+  const lastCandle = candles[candles.length - 1];
+  const isBull = lastCandle.c >= lastCandle.o;
+  const labelColor = label === 'M1' ? 'var(--amber)' : 'var(--blue)';
+  
+  // Build horizontal candle strip
+  let candlesHtml = candles.map((c, i) => {
+    const bull = c.c >= c.o;
+    const color = bull ? '#00e676' : '#ff1744';
+    
+    // Scale candle within the strip
+    const candleRange = c.h - c.l;
+    const bodyTop = Math.max(c.o, c.c);
+    const bodyBottom = Math.min(c.o, c.c);
+    
+    const topWickPct = ((c.h - bodyTop) / range) * 100;
+    const bodyPct = ((bodyTop - bodyBottom) / range) * 100;
+    const botWickPct = ((bodyBottom - c.l) / range) * 100;
+    const bottomPos = ((c.l - minP) / range) * 100;
+    
+    // Minimum body height for visibility
+    const minBodyHeight = Math.max(bodyPct, 15);
+    
+    return `
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:40px;position:relative;margin:0 1px;">
+        <!-- Top wick -->
+        <div style="width:1px;height:${Math.max(topWickPct, 2)}%;background:${color};opacity:0.7;"></div>
+        <!-- Body -->
+        <div style="width:6px;height:${minBodyHeight}%;background:${color};border-radius:1px;box-shadow:0 0 3px ${color}40;"></div>
+        <!-- Bottom wick -->
+        <div style="width:1px;height:${Math.max(botWickPct, 2)}%;background:${color};opacity:0.7;"></div>
+      </div>
+    `;
+  }).join('');
+  
+  // Add price labels on right
+  const priceLabels = `
+    <div style="display:flex;flex-direction:column;justify-content:space-between;height:40px;margin-left:6px;font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text3);">
+      <span>${fmt(maxP, inst)}</span>
+      <span>${fmt(lastCandle.c, inst)}</span>
+      <span>${fmt(minP, inst)}</span>
+    </div>
+  `;
+  
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:${labelColor};letter-spacing:1px;">${label} · ${candles.length}C</span>
+      <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text3);">${isBull ? '▲' : '▼'} ${fmt(lastCandle.c, inst)}</span>
+    </div>
+    <div style="display:flex;align-items:flex-end;height:40px;padding:4px 0;background:var(--bg3);border-radius:4px;border:1px solid var(--border);">
+      ${candlesHtml}
+      ${priceLabels}
+    </div>
+  `;
+}
+
+
+function drawChart(canvasId, candles) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  // Wait for canvas to be visible
+  if (canvas.offsetWidth === 0 || canvas.offsetHeight === 0) {
+    setTimeout(() => drawChart(canvasId, candles), 100);
+    return;
+  }
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth;
+  const H = canvas.offsetHeight;
+  canvas.width = W;
+  canvas.height = H;
+  const highs = candles.map(c => c.h);
+  const lows = candles.map(c => c.l);
+  const maxP = Math.max(...highs);
+  const minP = Math.min(...lows);
+  const range = maxP - minP || 1;
+  const pad = { l: 8, r: 55, t: 12, b: 12 };
+  const chartW = W - pad.l - pad.r;
+  const chartH = H - pad.t - pad.b;
+  const cw = chartW / candles.length;
+  const bodyW = cw * 0.6;
+  
+  ctx.clearRect(0, 0, W, H);
+  const midY = pad.t + chartH * 0.5;
+  ctx.strokeStyle = 'rgba(30,45,61,0.8)';
+  ctx.setLineDash([3,3]);
+  ctx.beginPath();
+  ctx.moveTo(pad.l, midY);
+  ctx.lineTo(W-pad.r, midY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  candles.forEach((c, i) => {
+    const x = pad.l + i * cw + cw * 0.5;
+    const toY = v => pad.t + chartH * (1 - (v - minP) / range);
+    const bull = c.c >= c.o;
+    const color = bull ? '#00e676' : '#ff1744';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, toY(c.h));
+    ctx.lineTo(x, toY(c.l));
+    ctx.stroke();
+    const bodyTop = toY(Math.max(c.o, c.c));
+    const bodyBot = toY(Math.min(c.o, c.c));
+    const bh = Math.max(bodyBot - bodyTop, 1);
+    ctx.fillStyle = color;
+    ctx.fillRect(x - bodyW/2, bodyTop, bodyW, bh);
+  });
+  
+  const lastC = candles[candles.length-1];
+  const lastY = pad.t + chartH * (1 - (lastC.c - minP) / range);
+  ctx.fillStyle = 'rgba(13,17,23,0.9)';
+  ctx.fillRect(W-pad.r+2, lastY-9, pad.r-2, 18);
+  ctx.fillStyle = lastC.c >= lastC.o ? '#00e676' : '#ff1744';
+  ctx.font = '9px Share Tech Mono';
+  ctx.fillText(parseFloat(lastC.c).toFixed(3), W-pad.r+4, lastY+3);
+}
+
+function renderChecklist(id, data) {
+  const items = [
+    { key: 'Direction', val: data.direction + ' signal', ok: true },
+    { key: 'Confidence', val: data.conf + '% — ' + (data.conf >= 80 ? 'strong' : data.conf >= 65 ? 'moderate' : 'weak'), ok: data.conf >= 65 },
+    { key: 'Structure', val: data.structure, ok: true },
+    { key: 'Exhaustion', val: data.exh + '% — ' + data.exhLabel.split('—')[0].trim(), ok: data.exh < 65 },
+    { key: 'Price zone', val: data.pricePos + '% of range — ' + (data.pricePos > 85 || data.pricePos < 15 ? 'extreme zone' : 'OK zone'), ok: data.pricePos > 15 && data.pricePos < 85 },
+    { key: 'R:R', val: data.rr + ':1 — ' + (data.rrBad ? 'low — wait for better entry' : 'acceptable'), ok: !data.rrBad },
+  ];
+  document.getElementById(id).innerHTML = items.map(it => 
+    `<div class="check-item"><div class="check-dot ${it.ok?'green':'red'}"></div><div><span class="check-key">${it.key}:</span><span class="check-val">${it.val}</span></div></div>`
+  ).join('');
+}
+
+function renderBars(id, data) {
+  const bars = [
+    { label: 'Structure', val: data.structScore, color: data.structScore > 60 ? 'var(--green)' : 'var(--amber)' },
+    { label: 'Candle Flow', val: data.candleFlow, color: data.candleFlow > 60 ? 'var(--green)' : 'var(--amber)' },
+    { label: 'BOS Signal', val: data.bosSignal, color: data.bosSignal > 70 ? 'var(--green)' : 'var(--amber)' },
+    { label: 'Energy Left', val: data.energyLeft, color: data.energyLeft > 50 ? 'var(--green)' : 'var(--amber)' },
+  ];
+  document.getElementById(id).innerHTML = bars.map(b => 
+    `<div class="bar-row"><div class="bar-label">${b.label}</div><div class="bar-track"><div class="bar-fill" style="width:${b.val}%;background:${b.color}"></div></div><div class="bar-pct" style="color:${b.color}">${b.val}%</div></div>`
+  ).join('');
+}
+
+function renderSignals(id, sigs) {
+  document.getElementById(id).innerHTML = sigs.map(s => 
+    `<div class="sig-item"><span class="sig-arrow ${s.type==='up'?'up':s.type==='down'?'down':'neutral'}">${s.type==='up'?'▲':s.type==='down'?'▼':'◆'}</span><span>${s.text}</span></div>`
+  ).join('');
+}
+
+function renderLevels(id, data, inst) {
+  document.getElementById(id).innerHTML = 
+    `<div class="level-row"><div class="level-key">SUPPLY / HIGH</div><div class="level-val supply">${fmt(data.supply,inst)}</div><div class="level-badge supply">SUPPLY</div></div>` +
+    `<div class="level-row"><div class="level-key">MID LEVEL</div><div class="level-val mid">${fmt(data.mid,inst)}</div><div class="level-badge mid">50%</div></div>` +
+    `<div class="level-row"><div class="level-key">DEMAND / LOW</div><div class="level-val demand">${fmt(data.demand,inst)}</div><div class="level-badge demand">DEMAND</div></div>` +
+    `<div class="level-row"><div class="level-key">LIVE PRICE</div><div class="level-val live">${fmt(data.last.c,inst)}</div><div class="level-badge live">LIVE</div></div>`;
+}
+
+function renderTradeGrid(id, data, inst) {
+  const rrClass = data.rr < 1.5 ? 'rr-bad' : data.rr < 2 ? 'rr-ok' : 'rr-good';
+  document.getElementById(id).innerHTML = 
+    `<div class="trade-cell"><div class="trade-cell-label">ENTRY (LIVE)</div><div class="trade-cell-val entry">${fmt(data.last.c,inst)}</div></div>` +
+    `<div class="trade-cell"><div class="trade-cell-label">STOP LOSS</div><div class="trade-cell-val stop">${fmt(data.sl,inst)}</div></div>` +
+    `<div class="trade-cell"><div class="trade-cell-label">TP1</div><div class="trade-cell-val tp">${fmt(data.tp1,inst)}</div></div>` +
+    `<div class="trade-cell"><div class="trade-cell-label">TP2</div><div class="trade-cell-val tp">${fmt(data.tp2,inst)}</div></div>` +
+    `<div class="trade-cell"><div class="trade-cell-label">R:R RATIO</div><div class="trade-cell-val ${rrClass}">${data.rr}:1</div></div>` +
+    `<div class="trade-cell"><div class="trade-cell-label">AVG RANGE (ATR)</div><div class="trade-cell-val neutral">${fmt(data.atr,inst)}</div></div>`;
+}
+
+function updateSignalCard(prefix, data, inst, tf) {
+  const card = document.getElementById(prefix + '-signal-card');
+  card.className = 'signal-card ' + (data.direction === 'LONG' ? 'long' : 'short');
+  document.getElementById(prefix + '-direction').textContent = data.direction;
+  document.getElementById(prefix + '-conf-pct').textContent = data.conf + '%';
+  document.getElementById(prefix + '-conf-bar').style.width = data.conf + '%';
+  const label = SYMBOL_LABELS[inst] || inst;
+  const tfLabel = TF_LABELS[tf] || tf + 's';
+  if (document.getElementById(prefix + '-signal-meta')) 
+    document.getElementById(prefix + '-signal-meta').textContent = `${label} · ${tfLabel} · LIVE · DERIV`;
+  document.getElementById(prefix + '-desc').textContent = `Structure: ${data.structure.toLowerCase()}. Price at ${data.pricePos}% of range. ${data.bos ? 'BOS detected. ' : ''}Exhaustion: ${data.exhLabel.split('—')[0].trim()}.`;
+}
+
+function updateMomentum(prefix, data) {
+  const statusEl = document.getElementById(prefix + '-momentum-status');
+  const fillEl = document.getElementById(prefix + '-momentum-fill');
+  if (statusEl) {
+    statusEl.textContent = data.exhLabel;
+    statusEl.style.color = data.exhColor;
+  }
+  if (fillEl) {
+    fillEl.style.width = data.exh + '%';
+    fillEl.style.background = data.exhColor;
+  }
+}
+
+function updateStats(prefix, data, inst) {
+  const structEl = document.getElementById(prefix + '-struct');
+  if (structEl) {
+    structEl.textContent = data.structure;
+    structEl.style.color = data.structure === 'BULLISH' ? 'var(--green)' : 'var(--red)';
+  }
+  const atrEl = document.getElementById(prefix + '-atr');
+  if (atrEl) atrEl.textContent = fmt(data.atr, inst);
+  const bodyEl = document.getElementById(prefix + '-body');
+  if (bodyEl) {
+    bodyEl.textContent = data.bodyPct + '%';
+    bodyEl.style.color = data.bodyPct > 70 ? 'var(--green)' : data.bodyPct > 40 ? 'var(--amber)' : 'var(--red)';
+  }
+}
+
+function setStale(prefix, fresh) {
+  const fill = document.getElementById(prefix + '-stale-fill');
+  const txt = document.getElementById(prefix + '-stale-txt');
+  if (fresh) {
+    fill.style.width = '12%';
+    fill.style.background = 'var(--green)';
+    txt.textContent = 'LIVE FRESH';
+    txt.style.color = 'var(--green)';
+  } else {
+    fill.style.width = '72%';
+    fill.style.background = 'var(--red)';
+    txt.textContent = 'STALE — RE-FETCH';
+    txt.style.color = 'var(--red)';
+  }
+}
+
+function updateLiveTicker(prefix, tick, inst) {
+  const el = document.getElementById(prefix + '-tick-price');
+  const timeEl = document.getElementById(prefix + '-tick-time');
+  if (!el || !tick) return;
+  el.textContent = fmt(tick.quote, inst);
+  el.className = 'ticker-price';
+  if (timeEl) timeEl.textContent = fmtTime(tick.epoch);
+}
+
+// ========== FETCH & ANALYZE ==========
+async function fetchAnalyze(mode) {
+  const prefix = mode === 'balanced' ? 'bal' : mode;
+  const inst = state[mode].inst;
+  const tf = state[mode].tf;
+  const count = mode === 'scalp' ? 5 : 10;
+  const tfLabel = TF_LABELS[tf] || tf + 's';
+  
+  showLoading(`FETCHING ${SYMBOL_LABELS[inst]||inst} ${tfLabel}...`, 'DERIV LIVE API');
+  updateWSStatus('connecting');
+  
+  try {
+    // Parallel fetch candles + tick (no more single resolver overwrite issue)
+    const [candles, tick] = await Promise.all([
+      fetchCandles(inst, tf, count),
+      fetchTick(inst).catch(() => null)
+    ]);
+    
+    if (!candles || candles.length < 2) {
+      hideLoading();
+      showError(prefix, `Not enough candles returned for ${SYMBOL_LABELS[inst]||inst}. Symbol may be unavailable.`);
+      updateWSStatus('error');
+      return;
+    }
+    
+    const data = analyzeCandles(candles, inst);
+    
+    document.getElementById(prefix + '-results').classList.remove('hidden');
+    renderCandleRows(prefix + '-candle-rows', candles, inst);
+    document.getElementById(prefix + '-tf-badge').textContent = tfLabel;
+    if (tick) updateLiveTicker(prefix, tick, inst);
+    
+    // Delay chart until visible
+    setTimeout(() => drawChart(prefix + '-chart', candles), 50);
+    
+    const warnEl = document.getElementById(prefix + '-warn');
+    if (data.rrBad) {
+      warnEl.classList.remove('hidden');
+      warnEl.textContent = `⚠️ R:R is only ${data.rr}:1 — below 1.5. Price too close to ${data.trendUp ? 'supply' : 'demand'}. Risky entry.`;
+    } else {
+      warnEl.classList.add('hidden');
+    }
+    
+    updateSignalCard(prefix, data, inst, tf);
+    renderChecklist(prefix + '-checklist', data);
+    renderBars(prefix + '-bars', data);
+    updateMomentum(prefix, data);
+    updateStats(prefix, data, inst);
+    renderSignals(prefix + '-signals', data.signals);
+    renderLevels(prefix + '-levels', data, inst);
+    renderTradeGrid(prefix + '-trade-grid', data, inst);
+    setStale(prefix, true);
+    updateWSStatus('connected');
+    hideLoading();
+    setTimeout(() => setStale(prefix, false), 180000);
+  } catch (err) {
+    hideLoading();
+    updateWSStatus('error');
+    showError(prefix, `Error: ${err.message}. Check connection and try again.`);
+    console.error(err);
+  }
+}
+
+function showError(prefix, msg) {
+  const resultsEl = document.getElementById(prefix + '-results');
+  resultsEl.classList.remove('hidden');
+  let errEl = document.getElementById(prefix + '-api-error');
+  if (!errEl) {
+    errEl = document.createElement('div');
+    errEl.id = prefix + '-api-error';
+    errEl.className = 'error-box';
+    resultsEl.insertBefore(errEl, resultsEl.firstChild);
+  }
+  errEl.textContent = '⚠️ ' + msg;
+}
+
+// ========== DUAL MODE ==========
+async function fetchDual() {
+  const inst = state.dual.inst;
+  const label = SYMBOL_LABELS[inst] || inst;
+  showLoading(`DUAL FETCH — ${label}`, 'M1 + M5 · DERIV LIVE');
+  updateWSStatus('connecting');
+  
+  try {
+    // Parallel fetch M1 and M5 — fixed: using Map to track multiple requests
+    const [m1Candles, m5Candles, tick] = await Promise.all([
+      fetchCandles(inst, '60', 5),
+      fetchCandles(inst, '300', 10),
+      fetchTick(inst).catch(() => null)
+    ]);
+    
+    if (m1Candles.length < 2 || m5Candles.length < 2) {
+      hideLoading();
+      alert('Not enough candles returned. Symbol may be unavailable right now.');
+      updateWSStatus('error');
+      return;
+    }
+    
+    const m1Data = analyzeCandles(m1Candles, inst);
+    const m5Data = analyzeCandles(m5Candles, inst);
+    const isPullback = m1Data.direction !== m5Data.direction && m5Data.conf > 75;
+    
+    renderDual(m1Data, m5Data, inst, isPullback, tick, m1Candles, m5Candles);
+    setStale('dual', true);
+    updateWSStatus('connected');
+    hideLoading();
+    setTimeout(() => setStale('dual', false), 120000);
+  } catch(err) {
+    hideLoading();
+    updateWSStatus('error');
+    console.error(err);
+    alert('Fetch error: ' + err.message);
+  }
+}
+
+function renderDual(m1, m5, inst, isPullback, tick, m1Candles, m5Candles) {
+  document.getElementById('dual-results').classList.remove('hidden');
+  const aligned = m1.direction === m5.direction || isPullback;
+  const alignEl = document.getElementById('dual-align-badges');
+  alignEl.innerHTML = 
+    `<div class="ab ${m5.direction === 'LONG' ? 'aligned' : 'misaligned'}"><span class="ab-icon">${m5.direction === 'LONG' ? '▲' : '▼'}</span> M5 ${m5.direction}</div>` +
+    `<div class="ab ${isPullback ? 'checking' : m1.direction === m5.direction ? 'aligned' : 'misaligned'}"><span class="ab-icon">${isPullback ? '⚠️' : m1.direction === m5.direction ? '✓' : '✗'}</span> M1 ${m1.direction}${isPullback ? ' (PB)' : ''}</div>` +
+    `<div class="ab ${aligned ? 'aligned' : 'misaligned'}"><span class="ab-icon">${aligned ? '✓' : '✗'}</span> ${aligned ? 'ALIGNED' : 'NO ALIGN'}</div>`;
+  
+  // Compact horizontal candle boxes side by side
+  const candlesHtml = `
+    <div id="dual-candles-section" style="margin:8px 16px 12px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div id="dual-m1-candles" style="padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);"></div>
+        <div id="dual-m5-candles" style="padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);"></div>
+      </div>
+    </div>`;
+  
+  // Remove old candles section if exists
+  const oldSection = document.getElementById('dual-candles-section');
+  if (oldSection) oldSection.remove();
+  
+  // Insert after alignment badges
+  const badgeRow = document.getElementById('dual-align-badges');
+  const candlesDiv = document.createElement('div');
+  candlesDiv.innerHTML = candlesHtml;
+  badgeRow.parentNode.insertBefore(candlesDiv, badgeRow.nextSibling);
+  
+  // Render horizontal candles
+  renderHorizontalCandles('dual-m1-candles', m1Candles, inst, 'M1');
+  renderHorizontalCandles('dual-m5-candles', m5Candles, inst, 'M5');
+  
+  const hardMisalign = !isPullback && m1.direction !== m5.direction && m5.conf > 70 && m1.conf > 70;
+  if (hardMisalign) {
+    document.getElementById('dual-no-align').classList.remove('hidden');
+    document.getElementById('dual-aligned-content').classList.add('hidden');
+    document.getElementById('dual-no-align-text').textContent = `LIVE DATA: M5 is ${m5.direction} (${m5.conf}% conf) but M1 signals ${m1.direction} (${m1.conf}% conf). Trends conflict. No trade. Wait for M1 to align.`;
+    return;
+  }
+  
+  document.getElementById('dual-no-align').classList.add('hidden');
+  document.getElementById('dual-aligned-content').classList.remove('hidden');
+  renderDualCol('dual-m1-body', m1, inst);
+  renderDualCol('dual-m5-body', m5, inst);
+  buildDecision(m1, m5, inst, isPullback);
+}
+
+function renderDualCol(id, data, inst) {
+  const dir = data.direction;
+  const dirColor = dir === 'LONG' ? 'var(--green)' : 'var(--red)';
+  document.getElementById(id).innerHTML = 
+    `<div class="dual-metric"><div class="dual-metric-label">DIRECTION</div><div class="dual-metric-val" style="color:${dirColor}">${dir}</div></div>` +
+    `<div class="dual-metric"><div class="dual-metric-label">CONFIDENCE</div><div class="dual-metric-val" style="color:${dirColor}">${data.conf}%</div><div class="dual-mini-bar"><div class="dual-mini-fill" style="width:${data.conf}%;background:${dirColor}"></div></div></div>` +
+    `<div class="dual-metric"><div class="dual-metric-label">STRUCTURE</div><div class="dual-metric-val" style="color:${dirColor}">${data.structure}</div></div>` +
+    `<div class="dual-metric"><div class="dual-metric-label">EXHAUSTION</div><div class="dual-metric-val" style="color:${data.exhColor};font-size:11px">${data.exhLabel.split('—')[0].trim()}</div><div class="dual-mini-bar"><div class="dual-mini-fill" style="width:${data.exh}%;background:${data.exhColor}"></div></div></div>` +
+    `<div class="dual-metric"><div class="dual-metric-label">PRICE POS</div><div class="dual-metric-val" style="color:${data.pricePos>80||data.pricePos<20?'var(--red)':'var(--text)'}">${data.pricePos}%</div><div class="dual-metric-sub">of range</div></div>` +
+    `<div class="dual-metric"><div class="dual-metric-label">R:R</div><div class="dual-metric-val" style="color:${data.rrBad?'var(--red)':'var(--green)'}">${data.rr}:1</div></div>`;
+}
+
+function buildDecision(m1, m5, inst, isPullback) {
+  const card = document.getElementById('dual-decision-card');
+  const mainEl = document.getElementById('dual-decision-main');
+  const reasonEl = document.getElementById('dual-decision-reason');
+  const labelEl = document.getElementById('dual-decision-label');
+  const confBar = document.getElementById('dual-cconf-bar');
+  const confVal = document.getElementById('dual-cconf-val');
+  const entryGrid = document.getElementById('dual-entry-grid');
+  
+  const trendLong = m5.direction === 'LONG';
+  let combinedConf = Math.round(m5.conf * 0.6 + m1.conf * 0.4);
+  let decision, cardClass, decisionLabel, reason, entryData = {};
+  
+  const m1CounterTrend = m1.direction !== m5.direction;
+  const m5Exhausted = m5.exh > 65;
+  const m5NearExtreme = m5.pricePos > 85 || m5.pricePos < 15;
+  const entryPrice = m1.last.c;
+  const activeSL = m1.sl;
+  
+  // ===== PULLBACK WAIT MODE (M1 counter-trend against strong M5) =====
+  if (isPullback && m1CounterTrend) {
+    // Calculate pullback target from M5's last swing + ATR buffer
+    const lastSwingLow = m5.structure?.lastSwingLow || m5.demand;
+    const lastSwingHigh = m5.structure?.lastSwingHigh || m5.supply;
+    const atrBuffer = m5.atr * 0.3; // 30% ATR buffer
+    
+    // Pullback target estimate
+    const pullbackTarget = trendLong 
+      ? lastSwingLow + atrBuffer  // For LONG: expect bounce from swing low + buffer
+      : lastSwingHigh - atrBuffer; // For SHORT: expect rejection at swing high - buffer
+    
+    // How far has price already pulled back?
+    const currentPullback = trendLong
+      ? m5.last.c - m1.last.c  // For LONG: how much lower is M1 close
+      : m1.last.c - m5.last.c; // For SHORT: how much higher is M1 close
+    
+    // Distance remaining to pullback target
+    const distanceToTarget = Math.abs(pullbackTarget - entryPrice);
+    
+    decision = trendLong ? '⏳ WAIT — BUY NEAR ' + fmt(pullbackTarget, inst) : '⏳ WAIT — SELL NEAR ' + fmt(pullbackTarget, inst);
+    cardClass = 'wait';
+    decisionLabel = 'PULLBACK IN PROGRESS — WAIT FOR ALIGNMENT';
+    reason = `M5 trend is <strong>${m5.direction}</strong> (${m5.conf}% conf). M1 is counter-trend (${m1.direction}). ` +
+             `<strong>Wait for pullback to complete near ${fmt(pullbackTarget, inst)}</strong>, then enter when M1 flips to ${m5.direction}. ` +
+             `Estimated pullback: ~${fmt(currentPullback, inst)} completed, ~${fmt(distanceToTarget, inst)} remaining.`;
+    entryData = { entry: null }; // No entry during pullback wait
+    
+  // ===== ALIGNED MODE (M1 === M5) - TP Safety Check =====
+  } else if (!m1CounterTrend) {
+    // Check M5 exhaustion first
+    if (m5Exhausted || m5NearExtreme) {
+      decision = 'SKIP — EXHAUSTED';
+      cardClass = 'no-trade';
+      decisionLabel = '✗ LATE MOVE — TOO RISKY';
+      const pb = trendLong ? m5.demand + (m5.supply - m5.demand) * 0.35 : m5.supply - (m5.supply - m5.demand) * 0.35;
+      reason = `Both M5 and M1 signal <strong>${m5.direction}</strong>, but M5 is ${m5Exhausted ? 'exhausted' : 'at extreme range'} (${m5.pricePos}%). Do not enter. Watch for pullback to <strong>${fmt(pb,inst)}</strong>.`;
+      entryData = { entry: null };
+    } else {
+      // Calculate TP safety based on estimated pullback depth from M5 structure
+      const lastSwingLow = m5.structure?.lastSwingLow || m5.demand;
+      const lastSwingHigh = m5.structure?.lastSwingHigh || m5.supply;
+      
+      // Estimate typical pullback depth from M5's structure
+      const avgSwingRange = Math.abs(lastSwingHigh - lastSwingLow);
+      const estimatedPullback = Math.max(m5.atr * 0.5, avgSwingRange * 0.25); // 50% ATR or 25% of swing range
+      
+      // Calculate distances
+      const distanceToM1TP = Math.abs(m1.tp1 - entryPrice);
+      const distanceToM5TP = Math.abs(m5.tp1 - entryPrice);
+      const distanceToSL = Math.abs(entryPrice - activeSL);
+      
+      // Safety check: Can we reach targets before pullback hits SL?
+      const m1TPSafe = distanceToM1TP > estimatedPullback;
+      const m5TPSafe = distanceToM5TP > (estimatedPullback * 1.5); // M5 needs more buffer
+      
+      // If even M1 TP is not safe, this is a failed setup
+      if (!m1TPSafe) {
+        decision = 'SKIP — PULLBACK RISK TOO HIGH';
+        cardClass = 'no-trade';
+        decisionLabel = '✗ RISKY SETUP — SKIP';
+        reason = `M5 + M1 align <strong>${m5.direction}</strong>, but estimated pullback (~${fmt(estimatedPullback,inst)}) ` +
+                 `would hit SL before reaching even M1 TP (${fmt(distanceToM1TP,inst)} away). ` +
+                 `<strong>Wait for deeper pullback completion.</strong>`;
+        entryData = { entry: null };
+      } 
+      // M1 TP safe, but M5 TP not safe — use M1 TP with warning
+      else if (!m5TPSafe) {
+        const activeTP = m1.tp1;
+        const activeRR = Math.abs(activeTP - entryPrice) / Math.max(distanceToSL, 0.0001);
+        
+        decision = trendLong ? '✓ BUY — USE M1 TP (SAFER)' : '✓ SELL — USE M1 TP (SAFER)';
+        cardClass = trendLong ? 'buy' : 'sell';
+        decisionLabel = '⚡ TRADE WITH CONSERVATIVE TP';
+        reason = `M5 + M1 align <strong>${m5.direction}</strong>. Combined conf ${combinedConf}%. ` +
+                 `<strong>Using M1 TP (${fmt(m1.tp1,inst)})</strong> — estimated pullback (~${fmt(estimatedPullback,inst)}) ` +
+                 `would reach entry before M5 TP (${fmt(m5.tp1,inst)}). Safer to target M1 level.`;
+        entryData = { entry: entryPrice, sl: activeSL, tp: activeTP, tp2: null, tpNote: 'M1 TP — pullback risk to M5', rr: +activeRR.toFixed(1) };
+      } 
+      // Both TPs safe — use M5 TP (full setup)
+      else {
+        const activeTP = m5.tp1;
+        const activeTP2 = m5.tp2;
+        const activeRR = Math.abs(activeTP - entryPrice) / Math.max(distanceToSL, 0.0001);
+        
+        if (combinedConf >= 75 && activeRR >= 1.5) {
+          decision = trendLong ? '✓ BUY — CLEAN SETUP' : '✓ SELL — CLEAN SETUP';
+          decisionLabel = '✓ PERFECT ENTRY — LIVE ALIGNED';
+        } else {
+          decision = trendLong ? '✓ BUY — MODERATE' : '✓ SELL — MODERATE';
+          decisionLabel = '⚡ MODERATE SETUP';
+        }
+        cardClass = trendLong ? 'buy' : 'sell';
+        reason = `M5 + M1 both confirm <strong>${m5.direction}</strong>. Combined conf <strong>${combinedConf}%</strong>. ` +
+                 `Both TPs safe from pullback (${fmt(estimatedPullback,inst)} est.). ${m5.bos ? 'BOS on M5. ' : ''}` +
+                 `<strong>Using M5 TP (${fmt(m5.tp1,inst)}).</strong>`;
+        entryData = { entry: entryPrice, sl: activeSL, tp: activeTP, tp2: activeTP2, tpNote: 'M5 TP — clean setup', rr: +activeRR.toFixed(1) };
+      }
+    }
+  } else {
+    decision = 'RE-FETCH FOR CLARITY';
+    cardClass = 'wait';
+    decisionLabel = '⚠️ UNCLEAR';
+    reason = 'Mixed signals on live data. Re-fetch for fresh read.';
+    entryData = { entry: null };
+  }
+  
+  card.className = 'decision-card ' + cardClass;
+  labelEl.textContent = decisionLabel;
+  mainEl.textContent = decision;
+  reasonEl.innerHTML = reason;
+  confBar.style.width = combinedConf + '%';
+  confVal.textContent = combinedConf + '%';
+  
+  // Build price levels info section
+  let priceInfoHtml = '';
+  if (isPullback && m1CounterTrend) {
+    // Pullback mode - show current price and target
+    const lastSwingLow = m5.structure?.lastSwingLow || m5.demand;
+    const lastSwingHigh = m5.structure?.lastSwingHigh || m5.supply;
+    const atrBuffer = m5.atr * 0.3;
+    const pullbackTarget = trendLong ? lastSwingLow + atrBuffer : lastSwingHigh - atrBuffer;
+    
+    priceInfoHtml = `
+      <div style="margin:12px 0;padding:10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text3);letter-spacing:1px;margin-bottom:8px;">PRICE LEVELS</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div>
+            <div style="font-size:8px;color:var(--text3);">CURRENT PRICE</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--cyan);">${fmt(entryPrice, inst)}</div>
+          </div>
+          <div>
+            <div style="font-size:8px;color:var(--text3);">PULLBACK TARGET</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--amber);">${fmt(pullbackTarget, inst)}</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:10px;color:var(--text2);">
+          ${trendLong ? '▲ Wait for price to drop to target, then enter LONG when M1 aligns' : '▼ Wait for price to rise to target, then enter SHORT when M1 aligns'}
+        </div>
+      </div>
+    `;
+  } else if (entryData.entry) {
+    // Trade mode - show entry, SL, TP prices
+    priceInfoHtml = `
+      <div style="margin:12px 0;padding:10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text3);letter-spacing:1px;margin-bottom:8px;">TRADE LEVELS</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <div>
+            <div style="font-size:8px;color:var(--text3);">ENTRY NOW</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--cyan);">${fmt(entryPrice, inst)}</div>
+          </div>
+          <div>
+            <div style="font-size:8px;color:var(--text3);">STOP LOSS</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--red);">${fmt(activeSL, inst)}</div>
+          </div>
+          <div>
+            <div style="font-size:8px;color:var(--text3);">TAKE PROFIT</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--green);">${fmt(entryData.tp, inst)}</div>
+          </div>
+        </div>
+        ${entryData.tp2 ? `
+        <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:8px;color:var(--text3);">TP2 EXTENDED:</span>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--cyan);">${fmt(entryData.tp2, inst)}</span>
+        </div>
+        ` : ''}
+        <div style="margin-top:8px;font-size:10px;color:var(--text2);">${entryData.tpNote}</div>
+      </div>
+    `;
+  }
+  
+  // Insert price info before the entry grid
+  const existingPriceInfo = document.getElementById('dual-price-info');
+  if (existingPriceInfo) existingPriceInfo.remove();
+  const priceDiv = document.createElement('div');
+  priceDiv.id = 'dual-price-info';
+  priceDiv.innerHTML = priceInfoHtml;
+  entryGrid.parentNode.insertBefore(priceDiv, entryGrid);
+  
+  if (entryData.entry) {
+    const rrClass = entryData.rr >= 2 ? 'green' : entryData.rr >= 1.5 ? 'amber' : 'red';
+    entryGrid.innerHTML = 
+      `<div class="ep-cell"><div class="ep-label">ENTRY</div><div class="ep-val ${trendLong?'green':'red'}">${fmt(entryData.entry,inst)}</div></div>` +
+      `<div class="ep-cell"><div class="ep-label">STOP LOSS</div><div class="ep-val red">${fmt(entryData.sl,inst)}</div></div>` +
+      `<div class="ep-cell"><div class="ep-label">TAKE PROFIT</div><div class="ep-val green">${fmt(entryData.tp,inst)}</div></div>` +
+      (entryData.tp2 ? 
+        `<div class="ep-cell"><div class="ep-label">TP2</div><div class="ep-val cyan">${fmt(entryData.tp2,inst)}</div></div>` :
+        `<div class="ep-cell"><div class="ep-label">TP2</div><div class="ep-val" style="color:var(--text3)">SKIP</div></div>`) +
+      `<div class="ep-cell" style="grid-column:span 2"><div class="ep-label">R:R RATIO</div><div class="ep-val ${rrClass}">${entryData.rr}:1</div></div>`;
+  } else {
+    entryGrid.innerHTML = `<div class="ep-cell" style="grid-column:span 2;padding:16px;text-align:center"><div class="ep-label" style="margin-bottom:6px">NO ENTRY</div><div class="ep-val" style="color:var(--text3);font-size:11px">${entryData.reason || 'Wait for alignment'}</div></div>`;
+  }
+}
+
+// ========== UI HELPERS ==========
+function showLoading(txt, sub) {
+  document.getElementById('loading-text').textContent = txt || 'FETCHING...';
+  document.getElementById('loading-sub').textContent = sub || 'DERIV API';
+  document.getElementById('loading').classList.add('show');
+}
+
+function updateLoadingText(txt) {
+  document.getElementById('loading-text').textContent = txt;
+}
+
+function hideLoading() {
+  document.getElementById('loading').classList.remove('show');
+}
+
+function updateWSStatus(status) {
+  const dot = document.getElementById('ws-dot');
+  const label = document.getElementById('ws-label');
+  dot.className = 'ws-dot';
+  label.className = 'ws-label';
+  if (status === 'connected') {
+    dot.classList.add('connected');
+    label.classList.add('connected');
+    label.textContent = 'LIVE';
+    state.wsReady = true;
+  } else if (status === 'connecting') {
+    dot.classList.add('connecting');
+    label.classList.add('connecting');
+    label.textContent = 'CONNECTING';
+  } else if (status === 'error') {
+    label.textContent = 'ERROR';
+    label.style.color = 'var(--red)';
+    state.wsReady = false;
+  } else {
+    label.textContent = 'OFFLINE';
+    state.wsReady = false;
+  }
+}
+
+// ========== AUTO-CONNECT ON LOAD ==========
+window.addEventListener('load', () => {
+  updateWSStatus('connecting');
+  // Connect and test with a ping
+  connectWS().then(() => {
+    updateWSStatus('connected');
+  }).catch(() => {
+    updateWSStatus('error');
+  });
+});
+</script></body></html>
