@@ -885,118 +885,130 @@ function buildDecision(m1, m5, inst, isPullback) {
   let decision, cardClass, decisionLabel, reason, entryData = {};
   
   const m1CounterTrend = m1.direction !== m5.direction;
-  const m5Exhausted = m5.exh > 65;
-  const m5NearExtreme = m5.pricePos > 85 || m5.pricePos < 15;
   const entryPrice = m1.last.c;
-  const activeSL = m1.sl;
   
-  // ===== PULLBACK WAIT MODE (M1 counter-trend against strong M5) =====
+  // ===== SNIPER SL CALCULATION (ATR-based, tight) =====
+  const atrSL = m5.atr * 0.3; // Tight 30% ATR stop
+  const tightSL = trendLong ? entryPrice - atrSL : entryPrice + atrSL;
+  
+  // Current price line for all decisions
+  const currentPriceLine = `<div style="margin-bottom:8px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--cyan);">📍 ANALYZED AT: <strong>${fmt(entryPrice, inst)}</strong></div>`;
+  
+  // ===== PULLBACK WAIT MODE (M1 counter-trend) =====
   if (isPullback && m1CounterTrend) {
-    // Calculate pullback target from M5's last swing + ATR buffer
-    const lastSwingLow = m5.structure?.lastSwingLow || m5.demand;
-    const lastSwingHigh = m5.structure?.lastSwingHigh || m5.supply;
-    const atrBuffer = m5.atr * 0.3; // 30% ATR buffer
+    // ATR-based realistic pullback expectation (not old swings)
+    const pullbackEstimate = m5.conf > 80 ? m5.atr * 0.5 : m5.atr * 0.8; // 50% or 80% ATR
+    const expectedPullbackPrice = trendLong ? entryPrice - pullbackEstimate : entryPrice + pullbackEstimate;
     
-    // Pullback target estimate
-    const pullbackTarget = trendLong 
-      ? lastSwingLow + atrBuffer  // For LONG: expect bounce from swing low + buffer
-      : lastSwingHigh - atrBuffer; // For SHORT: expect rejection at swing high - buffer
-    
-    // How far has price already pulled back?
-    const currentPullback = trendLong
-      ? m5.last.c - m1.last.c  // For LONG: how much lower is M1 close
-      : m1.last.c - m5.last.c; // For SHORT: how much higher is M1 close
-    
-    // Distance remaining to pullback target
-    const distanceToTarget = Math.abs(pullbackTarget - entryPrice);
-    
-    decision = trendLong ? '⏳ WAIT — BUY NEAR ' + fmt(pullbackTarget, inst) : '⏳ WAIT — SELL NEAR ' + fmt(pullbackTarget, inst);
     cardClass = 'wait';
-    decisionLabel = 'PULLBACK IN PROGRESS — WAIT FOR ALIGNMENT';
-    reason = `M5 trend is <strong>${m5.direction}</strong> (${m5.conf}% conf). M1 is counter-trend (${m1.direction}). ` +
-             `<strong>Wait for pullback to complete near ${fmt(pullbackTarget, inst)}</strong>, then enter when M1 flips to ${m5.direction}. ` +
-             `Estimated pullback: ~${fmt(currentPullback, inst)} completed, ~${fmt(distanceToTarget, inst)} remaining.`;
-    entryData = { entry: null }; // No entry during pullback wait
+    decisionLabel = '⏳ WAIT FOR M1 ALIGNMENT';
+    decision = trendLong ? 'WAIT — M1 COUNTER-TREND' : 'WAIT — M1 COUNTER-TREND';
     
-  // ===== ALIGNED MODE (M1 === M5) - TP Safety Check =====
+    reason = currentPriceLine + 
+             `M5 is <strong>${m5.direction}</strong> (${m5.conf}%). M1 is ${m1.direction} (counter). ` +
+             `<strong>Wait for M1 to flip ${m5.direction}</strong>. ` +
+             `Expected pullback: ~${fmt(pullbackEstimate, inst)} pts to <strong>${fmt(expectedPullbackPrice, inst)}</strong> area.`;
+    entryData = { entry: null, reason: 'Wait for M1 alignment' };
+    
+  // ===== ALIGNED MODE (M1 === M5) =====
   } else if (!m1CounterTrend) {
-    // Check M5 exhaustion first
-    if (m5Exhausted || m5NearExtreme) {
-      decision = 'SKIP — EXHAUSTED';
+    const exh = m5.exh;
+    const nearExtreme = m5.pricePos > 85 || m5.pricePos < 15;
+    
+    // Extreme exhaustion = skip entirely
+    if (exh >= 85 || nearExtreme) {
       cardClass = 'no-trade';
-      decisionLabel = '✗ LATE MOVE — TOO RISKY';
-      const pb = trendLong ? m5.demand + (m5.supply - m5.demand) * 0.35 : m5.supply - (m5.supply - m5.demand) * 0.35;
-      reason = `Both M5 and M1 signal <strong>${m5.direction}</strong>, but M5 is ${m5Exhausted ? 'exhausted' : 'at extreme range'} (${m5.pricePos}%). Do not enter. Watch for pullback to <strong>${fmt(pb,inst)}</strong>.`;
-      entryData = { entry: null };
+      decisionLabel = '✗ EXTREME EXHAUSTION — SKIP';
+      decision = 'SKIP — TOO LATE';
+      reason = currentPriceLine + 
+               `M5 + M1 aligned ${m5.direction}, but exhaustion at ${exh}% + price at ${m5.pricePos}% of range. ` +
+               `<strong>Too late — skip this move.</strong> Wait for fresh trend.`;
+      entryData = { entry: null, reason: 'Extreme exhaustion' };
     } else {
-      // Calculate TP safety based on estimated pullback depth from M5 structure
-      const lastSwingLow = m5.structure?.lastSwingLow || m5.demand;
-      const lastSwingHigh = m5.structure?.lastSwingHigh || m5.supply;
+      // Calculate tiered entry based on exhaustion
+      let tpPercent, slMultiplier, tradeLabel, riskNote;
       
-      // Estimate typical pullback depth from M5's structure
-      const avgSwingRange = Math.abs(lastSwingHigh - lastSwingLow);
-      const estimatedPullback = Math.max(m5.atr * 0.5, avgSwingRange * 0.25); // 50% ATR or 25% of swing range
-      
-      // Calculate distances
-      const distanceToM1TP = Math.abs(m1.tp1 - entryPrice);
-      const distanceToM5TP = Math.abs(m5.tp1 - entryPrice);
-      const distanceToSL = Math.abs(entryPrice - activeSL);
-      
-      // Safety check: Can we reach targets before pullback hits SL?
-      const m1TPSafe = distanceToM1TP > estimatedPullback;
-      const m5TPSafe = distanceToM5TP > (estimatedPullback * 1.5); // M5 needs more buffer
-      
-      // If even M1 TP is not safe, this is a failed setup
-      if (!m1TPSafe) {
-        decision = 'SKIP — PULLBACK RISK TOO HIGH';
-        cardClass = 'no-trade';
-        decisionLabel = '✗ RISKY SETUP — SKIP';
-        reason = `M5 + M1 align <strong>${m5.direction}</strong>, but estimated pullback (~${fmt(estimatedPullback,inst)}) ` +
-                 `would hit SL before reaching even M1 TP (${fmt(distanceToM1TP,inst)} away). ` +
-                 `<strong>Wait for deeper pullback completion.</strong>`;
-        entryData = { entry: null };
-      } 
-      // M1 TP safe, but M5 TP not safe — use M1 TP with warning
-      else if (!m5TPSafe) {
-        const activeTP = m1.tp1;
-        const activeRR = Math.abs(activeTP - entryPrice) / Math.max(distanceToSL, 0.0001);
-        
-        decision = trendLong ? '✓ BUY — USE M1 TP (SAFER)' : '✓ SELL — USE M1 TP (SAFER)';
-        cardClass = trendLong ? 'buy' : 'sell';
-        decisionLabel = '⚡ TRADE WITH CONSERVATIVE TP';
-        reason = `M5 + M1 align <strong>${m5.direction}</strong>. Combined conf ${combinedConf}%. ` +
-                 `<strong>Using M1 TP (${fmt(m1.tp1,inst)})</strong> — estimated pullback (~${fmt(estimatedPullback,inst)}) ` +
-                 `would reach entry before M5 TP (${fmt(m5.tp1,inst)}). Safer to target M1 level.`;
-        entryData = { entry: entryPrice, sl: activeSL, tp: activeTP, tp2: null, tpNote: 'M1 TP — pullback risk to M5', rr: +activeRR.toFixed(1) };
-      } 
-      // Both TPs safe — use M5 TP (full setup)
-      else {
-        const activeTP = m5.tp1;
-        const activeTP2 = m5.tp2;
-        const activeRR = Math.abs(activeTP - entryPrice) / Math.max(distanceToSL, 0.0001);
-        
-        if (combinedConf >= 75 && activeRR >= 1.5) {
-          decision = trendLong ? '✓ BUY — CLEAN SETUP' : '✓ SELL — CLEAN SETUP';
-          decisionLabel = '✓ PERFECT ENTRY — LIVE ALIGNED';
-        } else {
-          decision = trendLong ? '✓ BUY — MODERATE' : '✓ SELL — MODERATE';
-          decisionLabel = '⚡ MODERATE SETUP';
-        }
-        cardClass = trendLong ? 'buy' : 'sell';
-        reason = `M5 + M1 both confirm <strong>${m5.direction}</strong>. Combined conf <strong>${combinedConf}%</strong>. ` +
-                 `Both TPs safe from pullback (${fmt(estimatedPullback,inst)} est.). ${m5.bos ? 'BOS on M5. ' : ''}` +
-                 `<strong>Using M5 TP (${fmt(m5.tp1,inst)}).</strong>`;
-        entryData = { entry: entryPrice, sl: activeSL, tp: activeTP, tp2: activeTP2, tpNote: 'M5 TP — clean setup', rr: +activeRR.toFixed(1) };
+      if (exh < 30) {
+        // Fresh move
+        tpPercent = 1.0;
+        slMultiplier = 0.3;
+        tradeLabel = 'CLEAN SETUP';
+        riskNote = 'Fresh trend — full target';
+      } else if (exh < 50) {
+        // Building exhaustion
+        tpPercent = 0.75;
+        slMultiplier = 0.25;
+        tradeLabel = 'MODERATE — TIGHTEN STOPS';
+        riskNote = 'Building exhaustion — 75% TP, tighter SL';
+      } else if (exh < 70) {
+        // Tired
+        tpPercent = 0.5;
+        slMultiplier = 0.2;
+        tradeLabel = 'QUICK SCALP ONLY';
+        riskNote = 'Tired move — 50% TP, quick in/out';
+      } else {
+        // Very tired (70-85%)
+        tpPercent = 0.3;
+        slMultiplier = 0.15;
+        tradeLabel = 'LATE ENTRY — TINY TARGET';
+        riskNote = 'Very tired — 30% TP only, high risk';
       }
+      
+      // Calculate actual prices
+      const dynamicSL = trendLong ? entryPrice - (m5.atr * slMultiplier) : entryPrice + (m5.atr * slMultiplier);
+      const distanceToM5TP = Math.abs(m5.tp1 - entryPrice);
+      const dynamicTP = trendLong ? entryPrice + (distanceToM5TP * tpPercent) : entryPrice - (distanceToM5TP * tpPercent);
+      const dynamicTP2 = tpPercent >= 0.75 ? (trendLong ? entryPrice + (distanceToM5TP * 1.3) : entryPrice - (distanceToM5TP * 1.3)) : null;
+      
+      const slDistance = Math.abs(entryPrice - dynamicSL);
+      const tpDistance = Math.abs(dynamicTP - entryPrice);
+      const dynamicRR = tpDistance / Math.max(slDistance, 0.0001);
+      
+      // Decision based on exhaustion tier
+      if (exh < 30) {
+        decision = trendLong ? '✓ ENTER LONG — CLEAN' : '✓ ENTER SHORT — CLEAN';
+        cardClass = trendLong ? 'buy' : 'sell';
+        decisionLabel = '✓ PERFECT ENTRY — SNIPER';
+      } else if (exh < 50) {
+        decision = trendLong ? '⚠️ LONG — MODERATE' : '⚠️ SHORT — MODERATE';
+        cardClass = trendLong ? 'buy' : 'sell';
+        decisionLabel = '⚡ MODERATE — YOU DECIDE';
+      } else if (exh < 70) {
+        decision = trendLong ? '⚠️ LONG — QUICK SCALP' : '⚠️ SHORT — QUICK SCALP';
+        cardClass = trendLong ? 'buy' : 'sell';
+        decisionLabel = '⚠️ TIRED — FAST IN/OUT';
+      } else {
+        decision = trendLong ? '⚠️ LONG — LATE ENTRY' : '⚠️ SHORT — LATE ENTRY';
+        cardClass = 'wait'; // Use warning color
+        decisionLabel = '🔴 LATE — HIGH RISK';
+      }
+      
+      reason = currentPriceLine +
+               `M5 + M1 aligned <strong>${m5.direction}</strong>. Combined conf ${combinedConf}%. ` +
+               `Exhaustion: ${exh}%.<br><br>` +
+               `<strong>SL:</strong> ${fmt(dynamicSL, inst)} (${fmt(slDistance, inst)} pts) | ` +
+               `<strong>TP:</strong> ${fmt(dynamicTP, inst)} (${fmt(tpDistance, inst)} pts)<br>` +
+               `<strong>R:R:</strong> ${dynamicRR.toFixed(1)}:1 | ${riskNote}`;
+      
+      entryData = { 
+        entry: entryPrice, 
+        sl: dynamicSL, 
+        tp: dynamicTP, 
+        tp2: dynamicTP2, 
+        tpNote: riskNote, 
+        rr: +dynamicRR.toFixed(1),
+        exh: exh 
+      };
     }
   } else {
-    decision = 'RE-FETCH FOR CLARITY';
+    decision = 'RE-FETCH';
     cardClass = 'wait';
-    decisionLabel = '⚠️ UNCLEAR';
-    reason = 'Mixed signals on live data. Re-fetch for fresh read.';
-    entryData = { entry: null };
+    decisionLabel = '⚠️ UNCLEAR SIGNALS';
+    reason = currentPriceLine + 'Mixed signals. Re-fetch for clarity.';
+    entryData = { entry: null, reason: 'Unclear' };
   }
   
+  // Update UI
   card.className = 'decision-card ' + cardClass;
   labelEl.textContent = decisionLabel;
   mainEl.textContent = decision;
@@ -1004,64 +1016,39 @@ function buildDecision(m1, m5, inst, isPullback) {
   confBar.style.width = combinedConf + '%';
   confVal.textContent = combinedConf + '%';
   
-  // Build price levels info section
+  // Build price display
   let priceInfoHtml = '';
   if (isPullback && m1CounterTrend) {
-    // Pullback mode - show current price and target
-    const lastSwingLow = m5.structure?.lastSwingLow || m5.demand;
-    const lastSwingHigh = m5.structure?.lastSwingHigh || m5.supply;
-    const atrBuffer = m5.atr * 0.3;
-    const pullbackTarget = trendLong ? lastSwingLow + atrBuffer : lastSwingHigh - atrBuffer;
-    
+    const pullbackEstimate = m5.conf > 80 ? m5.atr * 0.5 : m5.atr * 0.8;
+    const expectedPrice = trendLong ? entryPrice - pullbackEstimate : entryPrice + pullbackEstimate;
     priceInfoHtml = `
       <div style="margin:12px 0;padding:10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);">
-        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text3);letter-spacing:1px;margin-bottom:8px;">PRICE LEVELS</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text3);letter-spacing:1px;margin-bottom:8px;">📍 CURRENT: ${fmt(entryPrice, inst)}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div>
-            <div style="font-size:8px;color:var(--text3);">CURRENT PRICE</div>
-            <div style="font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--cyan);">${fmt(entryPrice, inst)}</div>
-          </div>
-          <div>
-            <div style="font-size:8px;color:var(--text3);">PULLBACK TARGET</div>
-            <div style="font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--amber);">${fmt(pullbackTarget, inst)}</div>
-          </div>
+          <div><div style="font-size:8px;color:var(--text3);">PULLBACK EST</div><div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--amber);">~${fmt(pullbackEstimate, inst)} pts</div></div>
+          <div><div style="font-size:8px;color:var(--text3);">EXPECTED AREA</div><div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--cyan);">${fmt(expectedPrice, inst)}</div></div>
         </div>
-        <div style="margin-top:8px;font-size:10px;color:var(--text2);">
-          ${trendLong ? '▲ Wait for price to drop to target, then enter LONG when M1 aligns' : '▼ Wait for price to rise to target, then enter SHORT when M1 aligns'}
-        </div>
+        <div style="margin-top:8px;font-size:10px;color:var(--text2);">Wait for M1 to flip ${m5.direction}</div>
       </div>
     `;
-  } else if (entryData.entry) {
-    // Trade mode - show entry, SL, TP prices
+  } else if (entryData.entry && entryData.sl) {
+    const slDist = Math.abs(entryPrice - entryData.sl);
+    const tpDist = Math.abs(entryData.tp - entryPrice);
     priceInfoHtml = `
       <div style="margin:12px 0;padding:10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);">
-        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text3);letter-spacing:1px;margin-bottom:8px;">TRADE LEVELS</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--text3);letter-spacing:1px;margin-bottom:8px;">📍 ANALYZED AT: ${fmt(entryPrice, inst)}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-          <div>
-            <div style="font-size:8px;color:var(--text3);">ENTRY NOW</div>
-            <div style="font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--cyan);">${fmt(entryPrice, inst)}</div>
-          </div>
-          <div>
-            <div style="font-size:8px;color:var(--text3);">STOP LOSS</div>
-            <div style="font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--red);">${fmt(activeSL, inst)}</div>
-          </div>
-          <div>
-            <div style="font-size:8px;color:var(--text3);">TAKE PROFIT</div>
-            <div style="font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--green);">${fmt(entryData.tp, inst)}</div>
-          </div>
+          <div><div style="font-size:8px;color:var(--text3);">ENTRY</div><div style="font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--text);">${fmt(entryData.entry, inst)}</div></div>
+          <div><div style="font-size:8px;color:var(--text3);">STOP LOSS</div><div style="font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--red);">${fmt(entryData.sl, inst)}</div><div style="font-size:8px;color:var(--text3);">${fmt(slDist, inst)} pts</div></div>
+          <div><div style="font-size:8px;color:var(--text3);">TAKE PROFIT</div><div style="font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--green);">${fmt(entryData.tp, inst)}</div><div style="font-size:8px;color:var(--text3);">${fmt(tpDist, inst)} pts</div></div>
         </div>
-        ${entryData.tp2 ? `
-        <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:8px;color:var(--text3);">TP2 EXTENDED:</span>
-          <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--cyan);">${fmt(entryData.tp2, inst)}</span>
-        </div>
-        ` : ''}
-        <div style="margin-top:8px;font-size:10px;color:var(--text2);">${entryData.tpNote}</div>
+        ${entryData.tp2 ? `<div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;"><span style="font-size:8px;color:var(--text3);">TP2:</span><span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--cyan);">${fmt(entryData.tp2, inst)}</span></div>` : ''}
+        <div style="margin-top:8px;font-size:9px;color:var(--amber);">${entryData.tpNote}</div>
       </div>
     `;
   }
   
-  // Insert price info before the entry grid
+  // Update price info
   const existingPriceInfo = document.getElementById('dual-price-info');
   if (existingPriceInfo) existingPriceInfo.remove();
   const priceDiv = document.createElement('div');
@@ -1069,18 +1056,17 @@ function buildDecision(m1, m5, inst, isPullback) {
   priceDiv.innerHTML = priceInfoHtml;
   entryGrid.parentNode.insertBefore(priceDiv, entryGrid);
   
-  if (entryData.entry) {
+  // Update entry grid
+  if (entryData.entry && entryData.sl) {
     const rrClass = entryData.rr >= 2 ? 'green' : entryData.rr >= 1.5 ? 'amber' : 'red';
     entryGrid.innerHTML = 
       `<div class="ep-cell"><div class="ep-label">ENTRY</div><div class="ep-val ${trendLong?'green':'red'}">${fmt(entryData.entry,inst)}</div></div>` +
-      `<div class="ep-cell"><div class="ep-label">STOP LOSS</div><div class="ep-val red">${fmt(entryData.sl,inst)}</div></div>` +
-      `<div class="ep-cell"><div class="ep-label">TAKE PROFIT</div><div class="ep-val green">${fmt(entryData.tp,inst)}</div></div>` +
-      (entryData.tp2 ? 
-        `<div class="ep-cell"><div class="ep-label">TP2</div><div class="ep-val cyan">${fmt(entryData.tp2,inst)}</div></div>` :
-        `<div class="ep-cell"><div class="ep-label">TP2</div><div class="ep-val" style="color:var(--text3)">SKIP</div></div>`) +
+      `<div class="ep-cell"><div class="ep-label">STOP LOSS</div><div class="ep-val red">${fmt(entryData.sl,inst)}</div><div style="font-size:8px;color:var(--text3);">${fmt(Math.abs(entryData.entry-entryData.sl),inst)} pts</div></div>` +
+      `<div class="ep-cell"><div class="ep-label">TAKE PROFIT</div><div class="ep-val green">${fmt(entryData.tp,inst)}</div><div style="font-size:8px;color:var(--text3);">${fmt(Math.abs(entryData.tp-entryData.entry),inst)} pts</div></div>` +
+      (entryData.tp2 ? `<div class="ep-cell"><div class="ep-label">TP2</div><div class="ep-val cyan">${fmt(entryData.tp2,inst)}</div></div>` : `<div class="ep-cell"><div class="ep-label">TP2</div><div class="ep-val" style="color:var(--text3)">—</div></div>`) +
       `<div class="ep-cell" style="grid-column:span 2"><div class="ep-label">R:R RATIO</div><div class="ep-val ${rrClass}">${entryData.rr}:1</div></div>`;
   } else {
-    entryGrid.innerHTML = `<div class="ep-cell" style="grid-column:span 2;padding:16px;text-align:center"><div class="ep-label" style="margin-bottom:6px">NO ENTRY</div><div class="ep-val" style="color:var(--text3);font-size:11px">${entryData.reason || 'Wait for alignment'}</div></div>`;
+    entryGrid.innerHTML = `<div class="ep-cell" style="grid-column:span 2;padding:16px;text-align:center"><div class="ep-label" style="margin-bottom:6px">NO ENTRY</div><div class="ep-val" style="color:var(--text3);font-size:11px">${entryData.reason || 'Wait'}</div></div>`;
   }
 }
 
