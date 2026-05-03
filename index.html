@@ -228,13 +228,13 @@ function findSwingLows(candles, lookback = 2) {
   return swings;
 }
 
-function analyzeStructure(candles) {
-  const swingHighs = findSwingHighs(candles);
-  const swingLows = findSwingLows(candles);
+function analyzeStructure(candles, lookback = 2, swingSlice = 3) {
+  const swingHighs = findSwingHighs(candles, lookback);
+  const swingLows = findSwingLows(candles, lookback);
   
-  // Get recent significant swings (last 2-3 swings of each type)
-  const recentHighs = swingHighs.slice(-3);
-  const recentLows = swingLows.slice(-3);
+  // Get recent significant swings (last N swings of each type based on timeframe)
+  const recentHighs = swingHighs.slice(-swingSlice);
+  const recentLows = swingLows.slice(-swingSlice);
   
   // Check for Higher Highs / Higher Lows (Bullish)
   let hhhl = false;
@@ -270,7 +270,8 @@ function analyzeStructure(candles) {
   return { swingHighs, swingLows, hhhl, lhll, bullishBOS, bearishBOS, lastSwingHigh, lastSwingLow };
 }
 
-function analyzeCandles(candles, inst) {
+function analyzeCandles(candles, inst, tf = '60') {
+  const isM5 = tf === '300';
   const last = candles[candles.length - 1];
   const first = candles[0];
   const highs = candles.map(c => c.h);
@@ -291,8 +292,12 @@ function analyzeCandles(candles, inst) {
   const sma5 = closes.slice(-5).reduce((a, b) => a + b, 0) / Math.min(5, closes.length);
   const priceVsSMA = ((last.c - sma5) / sma5) * 100;
   
-  // Structure analysis
-  const structure = analyzeStructure(candles);
+  // Structure analysis - different sensitivity per timeframe
+  // M1: lookback=2 (sniper entries), M5: lookback=3 (stable trend filter)
+  // M5 also uses slice(-4) for more swing confirmations vs M1 slice(-3)
+  const lookback = isM5 ? 3 : 2;
+  const swingSlice = isM5 ? 4 : 3;
+  const structure = analyzeStructure(candles, lookback, swingSlice);
   
   // Progressive trend analysis using ALL candles
   // 1. Check overall price change from first to last
@@ -345,9 +350,11 @@ function analyzeCandles(candles, inst) {
   if (hasBullStructure) bullishScore += 3;
   if (hasBearStructure) bearishScore += 3;
   
-  // BOS factor (strong signal)
-  if (hasBullishBOS) bullishScore += 4;
-  if (hasBearishBOS) bearishScore += 4;
+  // BOS factor - M5 gets reduced weight (+1) to prevent constant flips
+  // M1 keeps strong weight (+4) for precise entry timing
+  const bosWeight = isM5 ? 1 : 4;
+  if (hasBullishBOS) bullishScore += bosWeight;
+  if (hasBearishBOS) bearishScore += bosWeight;
   
   // SMA comparison
   if (priceVsSMA > 0.05) bullishScore += 1;
@@ -779,7 +786,7 @@ async function fetchAnalyze(mode) {
       return;
     }
     
-    const data = analyzeCandles(candles, inst);
+    const data = analyzeCandles(candles, inst, tf);
     
     document.getElementById(prefix + '-results').classList.remove('hidden');
     renderCandleRows(prefix + '-candle-rows', candles, inst);
@@ -852,8 +859,8 @@ async function fetchDual() {
       return;
     }
     
-    const m1Data = analyzeCandles(m1Candles, inst);
-    const m5Data = analyzeCandles(m5Candles, inst);
+    const m1Data = analyzeCandles(m1Candles, inst, '60');
+    const m5Data = analyzeCandles(m5Candles, inst, '300');
     const isPullback = m1Data.direction !== m5Data.direction && m5Data.conf > 75;
     
     renderDual(m1Data, m5Data, inst, isPullback, tick, m1Candles, m5Candles);
