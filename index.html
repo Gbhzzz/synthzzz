@@ -346,23 +346,26 @@ function analyzeCandles(candles, inst, tf = '60') {
   if (recentMomentum === 'bull') bullishScore += 2;
   if (recentMomentum === 'bear') bearishScore += 2;
   
-  // Structure factor
-  if (hasBullStructure) bullishScore += 3;
-  if (hasBearStructure) bearishScore += 3;
+  // Structure factor - PRIMARY for M5 trend determination
+  if (hasBullStructure) bullishScore += isM5 ? 10 : 3;  // M5: structure is everything
+  if (hasBearStructure) bearishScore += isM5 ? 10 : 3;
   
-  // BOS factor - M5 gets reduced weight (+1) to prevent constant flips
+  // BOS factor - M5 gets NO BOS weight (removed entirely)
   // M1 keeps strong weight (+4) for precise entry timing
-  const bosWeight = isM5 ? 1 : 4;
-  if (hasBullishBOS) bullishScore += bosWeight;
-  if (hasBearishBOS) bearishScore += bosWeight;
+  if (!isM5) {
+    if (hasBullishBOS) bullishScore += 4;
+    if (hasBearishBOS) bearishScore += 4;
+  }
   
   // SMA comparison
   if (priceVsSMA > 0.05) bullishScore += 1;
   if (priceVsSMA < -0.05) bearishScore += 1;
   
-  // Last candle check (tiebreaker)
-  if (last.c > last.o) bullishScore += 1;
-  if (last.c < last.o) bearishScore += 1;
+  // Last candle check - M1 only for sniper entries, M5 ignores last candle
+  if (!isM5) {
+    if (last.c > last.o) bullishScore += 1;
+    if (last.c < last.o) bearishScore += 1;
+  }
   
   // Determine final direction based on scores
   const totalScore = bullishScore + bearishScore || 1;
